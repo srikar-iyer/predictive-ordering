@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Model Comparison - Predictive Ordering System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Forecast Model Comparison</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Forecast Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="forecast-form" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="store-id" class="form-label">Store ID</label>
+                            <input type="text" class="form-control" id="store-id" value="104.0">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="product-id" class="form-label">Product ID</label>
+                            <input type="text" class="form-control" id="product-id" value="3913116850.0">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="date-preset" class="form-label">Date Preset</label>
+                            <select class="form-select" id="date-preset">
+                                <option value="full" selected>Full Range</option>
+                                <option value="last7">Last 7 Days</option>
+                                <option value="last30">Last 30 Days</option>
+                                <option value="last90">Last 90 Days</option>
+                                <option value="next7">Next 7 Days</option>
+                                <option value="next30">Next 30 Days</option>
+                                <option value="next90">Next 90 Days</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="date-range" class="form-label">Custom Date Range</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="start-date">
+                                <span class="input-group-text">to</span>
+                                <input type="date" class="form-control" id="end-date">
+                            </div>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <button type="submit" class="btn btn-primary">Update Comparison</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Forecast Model Comparison</h5>
+                </div>
+                <div class="card-body">
+                    <div id="model-comparison-chart" style="height: 500px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Random Forest</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Strengths</h6>
+                    <ul>
+                        <li>Handles multiple feature interactions</li>
+                        <li>Robust to outliers</li>
+                        <li>Provides feature importance</li>
+                        <li>Well-suited for complex non-linear patterns</li>
+                    </ul>
+                    <h6>Weaknesses</h6>
+                    <ul>
+                        <li>Less effective for long sequences</li>
+                        <li>May overfit with too many trees</li>
+                        <li>Cannot extrapolate beyond training range</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <a href="/forecast/rf" class="btn btn-success btn-sm">View Detailed Forecast</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">ARIMA</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Strengths</h6>
+                    <ul>
+                        <li>Strong statistical foundation</li>
+                        <li>Captures seasonality and trends</li>
+                        <li>Provides confidence intervals</li>
+                        <li>Works well with stable patterns</li>
+                    </ul>
+                    <h6>Weaknesses</h6>
+                    <ul>
+                        <li>Cannot handle external factors easily</li>
+                        <li>Assumes stationarity</li>
+                        <li>Limited with non-linear patterns</li>
+                        <li>Requires parameter tuning</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <a href="/forecast/arima" class="btn btn-danger btn-sm">View Detailed Forecast</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">PyTorch Neural Network</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Strengths</h6>
+                    <ul>
+                        <li>Captures complex temporal dependencies</li>
+                        <li>Handles non-linear patterns effectively</li>
+                        <li>Learns hierarchical features</li>
+                        <li>Can model sophisticated relationships</li>
+                    </ul>
+                    <h6>Weaknesses</h6>
+                    <ul>
+                        <li>Requires more training data</li>
+                        <li>Higher computational requirements</li>
+                        <li>More hyperparameters to tune</li>
+                        <li>Less interpretable (black box)</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <a href="/forecast/pytorch" class="btn btn-primary btn-sm">View Detailed Forecast</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/date-range-utility.js') }}"></script>
+<script>
+    // Function to fetch and display model comparison
+    function loadModelComparison() {
+        // Get form values
+        const storeId = document.getElementById('store-id').value;
+        const productId = document.getElementById('product-id').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        // Build query string
+        let queryParams = [];
+        if (storeId) queryParams.push(`store_id=${storeId}`);
+        if (productId) queryParams.push(`product_id=${productId}`);
+        if (startDate) queryParams.push(`start_date=${startDate}`);
+        if (endDate) queryParams.push(`end_date=${endDate}`);
+        const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+        
+        // Fetch model comparison data
+        fetch(`/api/model-comparison-chart${queryString}`)
+            .then(response => response.json())
+            .then(data => {
+                const chartData = JSON.parse(data);
+                Plotly.newPlot('model-comparison-chart', chartData.data, chartData.layout);
+            })
+            .catch(error => {
+                console.error('Error loading model comparison data:', error);
+                document.getElementById('model-comparison-chart').innerHTML = 
+                    `<div class="alert alert-danger">Error loading model comparison data: ${error.message}</div>`;
+            });
+    }
+    
+    // Load model comparison on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadModelComparison();
+        
+        // Handle form submission
+        document.getElementById('forecast-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            loadModelComparison();
+        });
+    });
+</script>
+{% endblock %}

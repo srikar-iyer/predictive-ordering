@@ -1,0 +1,273 @@
+# Retail Product Order Quantity Prediction Test Results
+
+## Data Summary
+- Sample Size: 41774 records
+- Date Range: 2023-01-02 to 2024-07-24
+- Products: 18
+
+## Model Performance Metrics
+- Root Mean Squared Error (RMSE): 2.87
+- Mean Absolute Error (MAE): 1.21
+- R² Score: 0.3196
+
+## Top Factors Influencing Predictions
+1. Price: 0.2317
+2. Product_Frozen Dessert: 0.0718
+3. Promotion: 0.0669
+4. Sales_Avg_14: 0.0643
+5. Month_Cos: 0.0639
+6. Sales_Avg_30: 0.0589
+7. Product_Frozen Pizza: 0.0578
+8. Month_Sin: 0.0480
+9. Lead_Time: 0.0444
+10. Day_Sin: 0.0399
+
+## Test Scenarios Results
+
+### Ice
+- Baseline:
+  - Price: $3.39
+  - Promotion: No
+  - Holiday: No
+  - Weather: Normal
+  - Predicted Sales: 8 units
+  - Recommended Order: 9 units
+- Price Reduction:
+  - Price: $2.71
+  - Promotion: Yes
+  - Holiday: No
+  - Weather: Normal
+  - Predicted Sales: 6 units
+  - Recommended Order: 7 units
+- Holiday:
+  - Price: $3.39
+  - Promotion: No
+  - Holiday: Yes
+  - Weather: Normal
+  - Predicted Sales: 8 units
+  - Recommended Order: 9 units
+- Bad Weather:
+  - Price: $3.39
+  - Promotion: No
+  - Holiday: No
+  - Weather: Storm
+  - Predicted Sales: 9 units
+  - Recommended Order: 10 units
+- Holiday + Promotion:
+  - Price: $2.71
+  - Promotion: Yes
+  - Holiday: Yes
+  - Weather: Normal
+  - Predicted Sales: 6 units
+  - Recommended Order: 7 units
+
+### Frozen Snacks
+- Baseline:
+  - Price: $6.48
+  - Promotion: No
+  - Holiday: No
+  - Weather: Normal
+  - Predicted Sales: 1 units
+  - Recommended Order: 2 units
+- Price Reduction:
+  - Price: $5.18
+  - Promotion: Yes
+  - Holiday: No
+  - Weather: Normal
+  - Predicted Sales: 2 units
+  - Recommended Order: 3 units
+- Holiday:
+  - Price: $6.48
+  - Promotion: No
+  - Holiday: Yes
+  - Weather: Normal
+  - Predicted Sales: 1 units
+  - Recommended Order: 2 units
+- Bad Weather:
+  - Price: $6.48
+  - Promotion: No
+  - Holiday: No
+  - Weather: Storm
+  - Predicted Sales: 1 units
+  - Recommended Order: 2 units
+- Holiday + Promotion:
+  - Price: $5.18
+  - Promotion: Yes
+  - Holiday: Yes
+  - Weather: Normal
+  - Predicted Sales: 2 units
+  - Recommended Order: 3 units
+
+### Frozen Potatoes
+- Baseline:
+  - Price: $5.54
+  - Promotion: No
+  - Holiday: No
+  - Weather: Normal
+  - Predicted Sales: 1 units
+  - Recommended Order: 2 units
+- Price Reduction:
+  - Price: $4.43
+  - Promotion: Yes
+  - Holiday: No
+  - Weather: Normal
+  - Predicted Sales: 2 units
+  - Recommended Order: 3 units
+- Holiday:
+  - Price: $5.54
+  - Promotion: No
+  - Holiday: Yes
+  - Weather: Normal
+  - Predicted Sales: 1 units
+  - Recommended Order: 2 units
+- Bad Weather:
+  - Price: $5.54
+  - Promotion: No
+  - Holiday: No
+  - Weather: Storm
+  - Predicted Sales: 1 units
+  - Recommended Order: 2 units
+- Holiday + Promotion:
+  - Price: $4.43
+  - Promotion: Yes
+  - Holiday: Yes
+  - Weather: Normal
+  - Predicted Sales: 2 units
+  - Recommended Order: 3 units
+
+### Frozen Meals
+- Baseline:
+  - Price: $4.19
+  - Promotion: No
+  - Holiday: No
+  - Weather: Normal
+  - Predicted Sales: 1 units
+  - Recommended Order: 2 units
+- Price Reduction:
+  - Price: $3.35
+  - Promotion: Yes
+  - Holiday: No
+  - Weather: Normal
+  - Predicted Sales: 2 units
+  - Recommended Order: 3 units
+- Holiday:
+  - Price: $4.19
+  - Promotion: No
+  - Holiday: Yes
+  - Weather: Normal
+  - Predicted Sales: 1 units
+  - Recommended Order: 2 units
+- Bad Weather:
+  - Price: $4.19
+  - Promotion: No
+  - Holiday: No
+  - Weather: Storm
+  - Predicted Sales: 1 units
+  - Recommended Order: 2 units
+- Holiday + Promotion:
+  - Price: $3.35
+  - Promotion: Yes
+  - Holiday: Yes
+  - Weather: Normal
+  - Predicted Sales: 2 units
+  - Recommended Order: 3 units
+
+### Frozen Vegetarian
+- Baseline:
+  - Price: $5.15
+  - Promotion: No
+  - Holiday: No
+  - Weather: Normal
+  - Predicted Sales: 1 units
+  - Recommended Order: 2 units
+- Price Reduction:
+  - Price: $4.12
+  - Promotion: Yes
+  - Holiday: No
+  - Weather: Normal
+  - Predicted Sales: 2 units
+  - Recommended Order: 3 units
+- Holiday:
+  - Price: $5.15
+  - Promotion: No
+  - Holiday: Yes
+  - Weather: Normal
+  - Predicted Sales: 1 units
+  - Recommended Order: 2 units
+- Bad Weather:
+  - Price: $5.15
+  - Promotion: No
+  - Holiday: No
+  - Weather: Storm
+  - Predicted Sales: 1 units
+  - Recommended Order: 2 units
+- Holiday + Promotion:
+  - Price: $4.12
+  - Promotion: Yes
+  - Holiday: Yes
+  - Weather: Normal
+  - Predicted Sales: 2 units
+  - Recommended Order: 3 units
+
+## 30-Day Demand Forecast (Sample Products)
+
+### Ice
+| Date | Predicted Demand |
+|------|------------------|
+| 2024-07-25 | 7 |
+| 2024-07-26 | 8 |
+| 2024-07-27 | 8 |
+| 2024-07-28 | 8 |
+| 2024-07-29 | 7 |
+| 2024-07-30 | 7 |
+| 2024-07-31 | 7 |
+
+### Frozen Snacks
+| Date | Predicted Demand |
+|------|------------------|
+| 2024-07-25 | 1 |
+| 2024-07-26 | 1 |
+| 2024-07-27 | 1 |
+| 2024-07-28 | 1 |
+| 2024-07-29 | 1 |
+| 2024-07-30 | 1 |
+| 2024-07-31 | 1 |
+
+### Frozen Potatoes
+| Date | Predicted Demand |
+|------|------------------|
+| 2024-07-25 | 1 |
+| 2024-07-26 | 1 |
+| 2024-07-27 | 1 |
+| 2024-07-28 | 1 |
+| 2024-07-29 | 1 |
+| 2024-07-30 | 1 |
+| 2024-07-31 | 1 |
+
+### Frozen Meals
+| Date | Predicted Demand |
+|------|------------------|
+| 2024-07-25 | 1 |
+| 2024-07-26 | 1 |
+| 2024-07-27 | 1 |
+| 2024-07-28 | 1 |
+| 2024-07-29 | 1 |
+| 2024-07-30 | 1 |
+| 2024-07-31 | 1 |
+
+### Frozen Vegetarian
+| Date | Predicted Demand |
+|------|------------------|
+| 2024-07-25 | 1 |
+| 2024-07-26 | 1 |
+| 2024-07-27 | 1 |
+| 2024-07-28 | 1 |
+| 2024-07-29 | 1 |
+| 2024-07-30 | 1 |
+| 2024-07-31 | 1 |
+
+## Performance
+- Test Duration: 43.73 seconds
+
+## Conclusion
+The Random Forest model provides accurate demand predictions based on historical sales data. The model takes into account various factors including price, promotions, seasonality, and external events. The demand forecast can help optimize inventory management and reduce stockouts and overstock situations.

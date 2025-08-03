@@ -1,0 +1,658 @@
+{% extends "base.html" %}
+
+{% block title %}Predictive Ordering System - Integrated View{% endblock %}
+
+{% block head_extra %}
+<style>
+    .chart-container {
+        height: 350px;
+        margin-bottom: 20px;
+    }
+    .control-panel {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .metric-card {
+        text-align: center;
+        padding: 10px;
+    }
+    .metric-value {
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .metric-label {
+        font-size: 14px;
+        color: #6c757d;
+    }
+    .positive-impact {
+        color: #28a745;
+    }
+    .negative-impact {
+        color: #dc3545;
+    }
+    .neutral-impact {
+        color: #6c757d;
+    }
+    .recommendation-item {
+        border-left: 4px solid;
+        padding-left: 10px;
+        margin-bottom: 10px;
+    }
+    .high-priority {
+        border-left-color: #dc3545;
+    }
+    .medium-priority {
+        border-left-color: #ffc107;
+    }
+    .low-priority {
+        border-left-color: #17a2b8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>Integrated Business View</h2>
+        <p>A comprehensive view combining sales forecasts, inventory management, and price optimization.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Control Panel -->
+    <div class="col-md-12">
+        <div class="card control-panel">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="mb-3">
+                            <label for="store-select" class="form-label">Store</label>
+                            <select class="form-select" id="store-select">
+                                <option value="all">All Stores</option>
+                                <option value="1">Store 1</option>
+                                <option value="2">Store 2</option>
+                                <option value="3">Store 3</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="product-select" class="form-label">Product</label>
+                            <select class="form-select" id="product-select">
+                                <option value="all">All Products</option>
+                                <option value="1">Product 1</option>
+                                <option value="2">Product 2</option>
+                                <option value="3">Product 3</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="date-range" class="form-label">Date Range</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="start-date" value="2023-01-01">
+                                <span class="input-group-text">to</span>
+                                <input type="date" class="form-control" id="end-date" value="2023-03-01">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="mb-3">
+                            <label for="scenario-select" class="form-label">Scenario</label>
+                            <select class="form-select" id="scenario-select">
+                                <option value="current">Current</option>
+                                <option value="optimized">Optimized</option>
+                                <option value="conservative">Conservative</option>
+                                <option value="aggressive">Aggressive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button id="apply-filters" class="btn btn-primary w-100">Apply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics Row -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card metric-card">
+            <div class="card-body">
+                <div class="metric-value positive-impact" id="profit-impact">+$1,245</div>
+                <div class="metric-label">Profit Impact</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card">
+            <div class="card-body">
+                <div class="metric-value" id="inventory-coverage">4.3 days</div>
+                <div class="metric-label">Inventory Coverage</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card">
+            <div class="card-body">
+                <div class="metric-value neutral-impact" id="demand-forecast">342 units</div>
+                <div class="metric-label">7-Day Demand Forecast</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card">
+            <div class="card-body">
+                <div class="metric-value positive-impact" id="impact-score">87/100</div>
+                <div class="metric-label">Business Impact Score</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Integrated Chart -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Integrated Business View</h5>
+                <div class="btn-group float-end" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-integrated-png">
+                        <i class="fas fa-download"></i> PNG
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-integrated-csv">
+                        <i class="fas fa-download"></i> CSV
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="integrated-chart" class="chart-container" style="height: 650px">
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="toggle-forecast" checked>
+                    <label class="form-check-label" for="toggle-forecast">Forecast</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="toggle-inventory" checked>
+                    <label class="form-check-label" for="toggle-inventory">Inventory</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="toggle-price" checked>
+                    <label class="form-check-label" for="toggle-price">Price</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="toggle-profit" checked>
+                    <label class="form-check-label" for="toggle-profit">Profit</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recommendations and Adjustments Panel -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5><i class="fas fa-lightbulb text-warning"></i> Business Recommendations</h5>
+            </div>
+            <div class="card-body">
+                <div class="recommendation-item high-priority">
+                    <h6>Adjust Price Point</h6>
+                    <p>Increase price by 8% to optimize profit based on elasticity analysis.</p>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Impact: High</small>
+                        <button class="btn btn-sm btn-outline-primary">Apply</button>
+                    </div>
+                </div>
+                
+                <div class="recommendation-item medium-priority">
+                    <h6>Increase Safety Stock</h6>
+                    <p>Weather forecast indicates increased demand. Raise safety stock by 20%.</p>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Impact: Medium</small>
+                        <button class="btn btn-sm btn-outline-primary">Apply</button>
+                    </div>
+                </div>
+                
+                <div class="recommendation-item low-priority">
+                    <h6>Schedule Promotion</h6>
+                    <p>Low forecasted demand in week 3. Consider running a promotion.</p>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Impact: Low</small>
+                        <button class="btn btn-sm btn-outline-primary">Apply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5><i class="fas fa-sliders-h"></i> Parameter Adjustments</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="price-adjustment" class="form-label">Price Adjustment (%)</label>
+                    <input type="range" class="form-range" id="price-adjustment" min="-30" max="30" value="0">
+                    <div class="d-flex justify-content-between">
+                        <small>-30%</small>
+                        <small id="price-adjustment-value">0%</small>
+                        <small>+30%</small>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="inventory-adjustment" class="form-label">Inventory Adjustment (%)</label>
+                    <input type="range" class="form-range" id="inventory-adjustment" min="-50" max="100" value="0">
+                    <div class="d-flex justify-content-between">
+                        <small>-50%</small>
+                        <small id="inventory-adjustment-value">0%</small>
+                        <small>+100%</small>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="forecast-scenario" class="form-label">Forecast Scenario</label>
+                    <select class="form-select" id="forecast-scenario">
+                        <option value="baseline">Baseline</option>
+                        <option value="optimistic">Optimistic</option>
+                        <option value="pessimistic">Pessimistic</option>
+                        <option value="extreme-weather">Extreme Weather</option>
+                    </select>
+                </div>
+                
+                <div class="d-grid mt-4">
+                    <button class="btn btn-primary" id="update-simulation">Update Simulation</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Impact Heatmap -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Business Impact Heatmap</h5>
+                <div class="btn-group float-end" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-heatmap-png">
+                        <i class="fas fa-download"></i> PNG
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="impact-heatmap" class="chart-container">
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-secondary active" id="view-profit">Profit Impact</button>
+                    <button type="button" class="btn btn-outline-secondary" id="view-revenue">Revenue Impact</button>
+                    <button type="button" class="btn btn-outline-secondary" id="view-stockout">Stockout Risk</button>
+                    <button type="button" class="btn btn-outline-secondary" id="view-composite">Composite Score</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create integrated chart
+        createIntegratedChart();
+        
+        // Create impact heatmap
+        createImpactHeatmap();
+        
+        // Setup range slider value display
+        document.getElementById('price-adjustment').addEventListener('input', function() {
+            document.getElementById('price-adjustment-value').textContent = this.value + '%';
+        });
+        
+        document.getElementById('inventory-adjustment').addEventListener('input', function() {
+            document.getElementById('inventory-adjustment-value').textContent = this.value + '%';
+        });
+        
+        // Update simulation button
+        document.getElementById('update-simulation').addEventListener('click', function() {
+            const priceAdjustment = document.getElementById('price-adjustment').value;
+            const inventoryAdjustment = document.getElementById('inventory-adjustment').value;
+            const forecastScenario = document.getElementById('forecast-scenario').value;
+            
+            alert(`In a production app, this would update the simulation with:
+                Price Adjustment: ${priceAdjustment}%
+                Inventory Adjustment: ${inventoryAdjustment}%
+                Forecast Scenario: ${forecastScenario}`);
+            
+            // In a real app, this would trigger new chart rendering with updated parameters
+        });
+        
+        // Export button functionality
+        document.getElementById('export-integrated-png').addEventListener('click', function() {
+            Plotly.downloadImage('integrated-chart', {
+                format: 'png', 
+                filename: 'integrated_business_view'
+            });
+        });
+        
+        document.getElementById('export-heatmap-png').addEventListener('click', function() {
+            Plotly.downloadImage('impact-heatmap', {
+                format: 'png', 
+                filename: 'business_impact_heatmap'
+            });
+        });
+        
+        // View toggle buttons for heatmap
+        const viewButtons = document.querySelectorAll('.btn-group .btn-outline-secondary');
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                viewButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // In a real app, this would update the heatmap visualization
+                alert(`In a production app, this would update the heatmap to show ${this.textContent}`);
+            });
+        });
+        
+        // Create sample integrated chart
+        function createIntegratedChart() {
+            // Generate dates for x-axis
+            const dates = [];
+            const sales = [];
+            const forecast = [];
+            const upperBound = [];
+            const lowerBound = [];
+            const inventory = [];
+            const safetyStock = [];
+            const targetStock = [];
+            const price = [];
+            const profit = [];
+            
+            const currentDate = new Date('2023-01-01');
+            const endDate = new Date('2023-02-01');
+            
+            let currentPrice = 9.99;
+            let currentInventory = 60;
+            
+            while (currentDate <= endDate) {
+                dates.push(new Date(currentDate));
+                
+                // Generate sample data with some trends and patterns
+                const dayOfMonth = currentDate.getDate();
+                
+                // Sales and forecast with weekend effect
+                const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+                const baseSales = isWeekend ? 25 : 15;
+                const salesNoise = Math.random() * 5;
+                const dailySales = baseSales + salesNoise + Math.sin(dayOfMonth / 5) * 3;
+                
+                sales.push(dailySales);
+                forecast.push(baseSales + Math.sin(dayOfMonth / 5) * 3);
+                upperBound.push(baseSales + 8 + Math.sin(dayOfMonth / 5) * 3);
+                lowerBound.push(baseSales - 8 + Math.sin(dayOfMonth / 5) * 3);
+                
+                // Inventory
+                if (dayOfMonth % 7 === 0) {
+                    currentInventory += 40; // Weekly replenishment
+                }
+                currentInventory -= dailySales;
+                if (currentInventory < 0) currentInventory = 0;
+                
+                inventory.push(currentInventory);
+                safetyStock.push(30);
+                targetStock.push(60);
+                
+                // Price with occasional adjustments
+                if (dayOfMonth % 10 === 0) {
+                    currentPrice = Math.round((currentPrice + (Math.random() - 0.5)) * 100) / 100;
+                }
+                price.push(currentPrice);
+                
+                // Profit based on price and sales
+                const cost = 5.99;
+                profit.push((currentPrice - cost) * dailySales);
+                
+                // Move to next day
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            // Create a multi-panel chart
+            const trace1 = {
+                x: dates,
+                y: forecast,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Forecast',
+                line: {color: 'blue'},
+                legendgroup: 'forecast',
+                xaxis: 'x',
+                yaxis: 'y'
+            };
+            
+            const trace2 = {
+                x: dates,
+                y: upperBound,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Upper Bound',
+                line: {width: 0},
+                legendgroup: 'forecast',
+                showlegend: false,
+                xaxis: 'x',
+                yaxis: 'y'
+            };
+            
+            const trace3 = {
+                x: dates,
+                y: lowerBound,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Lower Bound',
+                fill: 'tonexty',
+                fillcolor: 'rgba(0, 0, 255, 0.2)',
+                line: {width: 0},
+                legendgroup: 'forecast',
+                showlegend: false,
+                xaxis: 'x',
+                yaxis: 'y'
+            };
+            
+            const trace4 = {
+                x: dates,
+                y: sales,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Actual Sales',
+                line: {color: 'green', dash: 'dot'},
+                legendgroup: 'forecast',
+                xaxis: 'x',
+                yaxis: 'y'
+            };
+            
+            const trace5 = {
+                x: dates,
+                y: inventory,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Inventory',
+                line: {color: 'orange'},
+                legendgroup: 'inventory',
+                xaxis: 'x',
+                yaxis: 'y2'
+            };
+            
+            const trace6 = {
+                x: dates,
+                y: safetyStock,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Safety Stock',
+                line: {color: 'red', dash: 'dash'},
+                legendgroup: 'inventory',
+                xaxis: 'x',
+                yaxis: 'y2'
+            };
+            
+            const trace7 = {
+                x: dates,
+                y: price,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Price',
+                line: {color: 'purple'},
+                legendgroup: 'price',
+                xaxis: 'x',
+                yaxis: 'y3'
+            };
+            
+            const trace8 = {
+                x: dates,
+                y: profit,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Profit',
+                line: {color: 'brown'},
+                marker: {size: 5},
+                legendgroup: 'profit',
+                xaxis: 'x',
+                yaxis: 'y4'
+            };
+            
+            const data = [trace1, trace2, trace3, trace4, trace5, trace6, trace7, trace8];
+            
+            const layout = {
+                title: 'Integrated Business View',
+                grid: {
+                    rows: 4,
+                    columns: 1,
+                    pattern: 'independent',
+                    roworder: 'top to bottom'
+                },
+                xaxis: {
+                    title: 'Date',
+                    domain: [0, 0.9]
+                },
+                yaxis: {
+                    title: 'Sales & Forecast',
+                    domain: [0.76, 0.97]
+                },
+                xaxis2: {
+                    anchor: 'y2',
+                    domain: [0, 0.9]
+                },
+                yaxis2: {
+                    title: 'Inventory',
+                    domain: [0.52, 0.73]
+                },
+                xaxis3: {
+                    anchor: 'y3',
+                    domain: [0, 0.9]
+                },
+                yaxis3: {
+                    title: 'Price ($)',
+                    domain: [0.28, 0.49]
+                },
+                xaxis4: {
+                    anchor: 'y4',
+                    domain: [0, 0.9]
+                },
+                yaxis4: {
+                    title: 'Profit ($)',
+                    domain: [0.04, 0.25]
+                },
+                legend: {
+                    traceorder: 'grouped'
+                },
+                height: 650,
+                margin: {l: 60, r: 20, t: 40, b: 20}
+            };
+            
+            Plotly.newPlot('integrated-chart', data, layout);
+        }
+        
+        // Create sample impact heatmap
+        function createImpactHeatmap() {
+            // Create price adjustment values (x-axis)
+            const priceAdjustments = [-20, -15, -10, -5, 0, 5, 10, 15, 20];
+            
+            // Create inventory adjustment values (y-axis)
+            const inventoryAdjustments = [-30, -20, -10, 0, 10, 20, 30, 40, 50];
+            
+            // Create profit impact values (z values)
+            const profitImpact = [];
+            
+            // Generate some sample profit impact data
+            for (let i = 0; i < inventoryAdjustments.length; i++) {
+                const row = [];
+                for (let j = 0; j < priceAdjustments.length; j++) {
+                    // Simulate a profit function that depends on price and inventory adjustments
+                    const priceEffect = priceAdjustments[j] * (-0.5 + 3 * Math.random());
+                    const inventoryEffect = inventoryAdjustments[i] * (0.2 + Math.random());
+                    // Add a peak near the middle-right area
+                    const peak = 100 * Math.exp(
+                        -0.01 * Math.pow(priceAdjustments[j] - 10, 2) - 
+                        0.01 * Math.pow(inventoryAdjustments[i] - 15, 2)
+                    );
+                    row.push(priceEffect + inventoryEffect + peak);
+                }
+                profitImpact.push(row);
+            }
+            
+            const data = [{
+                x: priceAdjustments,
+                y: inventoryAdjustments,
+                z: profitImpact,
+                type: 'heatmap',
+                colorscale: 'RdBu',
+                showscale: true,
+                colorbar: {
+                    title: 'Profit Impact ($)',
+                    titleside: 'right'
+                }
+            }];
+            
+            const layout = {
+                title: 'Business Impact Analysis: Price vs Inventory Adjustments',
+                xaxis: {
+                    title: 'Price Adjustment (%)'
+                },
+                yaxis: {
+                    title: 'Inventory Adjustment (%)'
+                },
+                margin: {l: 70, r: 50, t: 50, b: 50},
+                annotations: [{
+                    x: 10,
+                    y: 15,
+                    text: 'Optimal',
+                    showarrow: true,
+                    arrowhead: 3,
+                    arrowcolor: 'black',
+                    arrowsize: 1,
+                    font: {
+                        color: 'black'
+                    }
+                }]
+            };
+            
+            Plotly.newPlot('impact-heatmap', data, layout);
+        }
+    });
+</script>
+{% endblock %}

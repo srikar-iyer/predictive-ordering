@@ -1,0 +1,900 @@
+{% extends "base.html" %}
+
+{% block title %}Predictive Ordering System - Sales Data + Demand Forecast{% endblock %}
+
+{% block head_extra %}
+<style>
+    .chart-container {
+        height: 600px;
+        margin-bottom: 20px;
+        width: 100%;
+        overflow-x: auto;
+    }
+    .control-panel {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .plotly-graph-div {
+        width: 100% !important;
+        min-width: 800px;
+    }
+    .distribution-container {
+        height: 350px;
+        width: 100%;
+        overflow-x: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>Sales Data + Demand Forecast</h2>
+        <p>Visualize historical sales data and future demand predictions with confidence intervals.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Control Panel -->
+    <div class="col-md-12">
+        <div class="card control-panel">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="store-select" class="form-label">Store</label>
+                            <select class="form-select" id="store-select">
+                                <option value="all">All Stores</option>
+                                <!-- Store options will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="product-select" class="form-label">Product</label>
+                            <select class="form-select" id="product-select">
+                                <option value="all">All Products</option>
+                                <!-- Product options will be populated dynamically -->
+                            </select>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="toggle-product-name" checked>
+                                <label class="form-check-label" for="toggle-product-name">Show Product Names</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="date-range" class="form-label">Date Range</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="start-date">
+                                <span class="input-group-text">to</span>
+                                <input type="date" class="form-control" id="end-date">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button id="apply-filters" class="btn btn-primary w-100">Apply Filters</button>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="date-preset" class="form-label">Date Preset</label>
+                            <select class="form-select" id="date-preset">
+                                <option value="last14" selected>Last 2 Weeks</option>
+                                <option value="last7">Last 7 Days</option>
+                                <option value="last30">Last 30 Days</option>
+                                <option value="last90">Last 90 Days</option>
+                                <option value="next7">Next 7 Days</option>
+                                <option value="next14">Next 2 Weeks</option>
+                                <option value="next30">Next 30 Days</option>
+                                <option value="full">Full Range</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-light">
+                            <div class="card-header bg-light py-1">Models</div>
+                            <div class="card-body py-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="toggle-rf" checked>
+                                    <label class="form-check-label text-success" for="toggle-rf">Random Forest</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="toggle-arima" checked>
+                                    <label class="form-check-label text-danger" for="toggle-arima">ARIMA</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="toggle-pytorch" checked>
+                                    <label class="form-check-label text-primary" for="toggle-pytorch">PyTorch</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-light">
+                            <div class="card-header bg-light py-1">Data Display</div>
+                            <div class="card-body py-2">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="toggle-confidence" checked>
+                                    <label class="form-check-label" for="toggle-confidence">Confidence Intervals</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="toggle-actual" checked>
+                                    <label class="form-check-label" for="toggle-actual">Historical Sales</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="toggle-trends">
+                                    <label class="form-check-label" for="toggle-trends">Trend Lines</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light h-100">
+                            <div class="card-body">
+                                <p class="card-text small text-muted mb-0">
+                                    <i class="fas fa-info-circle"></i> Showing all 3 forecast models overlaid for comparison. 
+                                    Use toggles to show/hide models and confidence intervals.
+                                </p>
+                                <p class="card-text small text-muted mt-2 mb-0">
+                                    <i class="fas fa-calendar-alt"></i> Default view: 2 weeks
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Main Forecast Chart -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Detailed Sales Forecast</h5>
+                <div class="btn-group float-end" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-png">
+                        <i class="fas fa-download"></i> PNG
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-svg">
+                        <i class="fas fa-download"></i> SVG
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-csv">
+                        <i class="fas fa-download"></i> CSV
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="detailed-forecast-chart" class="chart-container w-100">
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Forecast Metrics -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Forecast Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="card-subtitle mb-2 text-muted">7-Day Forecast Metrics (from 07/08/2025)</div>
+                <table class="table table-hover">
+                    <tbody>
+                        <tr>
+                            <th>Daily Average</th>
+                            <td id="metric-mean">Loading...</td>
+                        </tr>
+                        <tr>
+                            <th>Min Daily Forecast</th>
+                            <td id="metric-min">Loading...</td>
+                        </tr>
+                        <tr>
+                            <th>Max Daily Forecast</th>
+                            <td id="metric-max">Loading...</td>
+                        </tr>
+                        <tr>
+                            <th>Total 7-Day Demand</th>
+                            <td id="metric-total">Loading...</td>
+                        </tr>
+                        <tr>
+                            <th>Confidence Level</th>
+                            <td id="metric-accuracy">Loading...</td>
+                        </tr>
+                        <tr>
+                            <th>Trend</th>
+                            <td id="metric-trend">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Forecast Distribution -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Forecast Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div id="forecast-distribution-chart" class="distribution-container">
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/date-range-utility.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load dropdown data first
+        loadStoreOptions();
+        loadProductOptions();
+        
+        // Set default to 2-week timespan
+        const today = new Date();
+        const twoWeeksAgo = new Date(today);
+        twoWeeksAgo.setDate(today.getDate() - 14);
+        document.getElementById('start-date').value = twoWeeksAgo.toISOString().split('T')[0];
+        document.getElementById('end-date').value = today.toISOString().split('T')[0];
+        
+        // Load all forecast models data to overlay them
+        loadAllForecastModels();
+                
+        // Function to load and display all forecast models
+        function loadAllForecastModels() {
+            // Get filter values
+            const storeId = document.getElementById('store-id').value;
+            const productId = document.getElementById('product-id').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            // Base query parameters
+            const baseParams = new URLSearchParams();
+            if (storeId !== 'all') baseParams.append('store_id', storeId);
+            if (productId !== 'all') baseParams.append('product_id', productId);
+            if (startDate) baseParams.append('start_date', startDate);
+            if (endDate) baseParams.append('end_date', endDate);
+            const queryString = baseParams.toString() ? `?${baseParams.toString()}` : '';
+            
+            // Show loading indicator
+            document.getElementById('detailed-forecast-chart').innerHTML = `
+                <div class="d-flex justify-content-center align-items-center h-100">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>`;
+                
+            // Create promises for all three forecast types
+            const promises = [
+                fetch(`/api/rf-forecast-data${queryString}`).then(response => response.json()),
+                fetch(`/api/arima-forecast-data${queryString}`).then(response => response.json()),
+                fetch(`/api/pytorch-forecast-data${queryString}`).then(response => response.json())
+            ];
+            
+            // Load historical data
+            const historyPromise = fetch(`/api/forecast-data${queryString}&forecast_model=rf`).then(response => response.json());
+            
+            // Wait for all data to load
+            Promise.all([...promises, historyPromise])
+                .then(([rfData, arimaData, pytorchData, historyData]) => {
+                    // Parse the JSON strings back to objects
+                    const rfChart = JSON.parse(rfData);
+                    const arimaChart = JSON.parse(arimaData);
+                    const pytorchChart = JSON.parse(pytorchData);
+                    const historyChart = JSON.parse(historyData);
+                    
+                    // Store the forecast traces
+                    window.forecastModels = {
+                        rf: {
+                            forecast: rfChart.data[0],  // Main forecast line
+                            confidenceLower: rfChart.data.length > 1 ? rfChart.data[2] : null,  // Lower bound
+                            confidenceUpper: rfChart.data.length > 1 ? rfChart.data[1] : null   // Upper bound
+                        },
+                        arima: {
+                            forecast: arimaChart.data[0],
+                            confidenceLower: arimaChart.data.length > 1 ? arimaChart.data[2] : null,
+                            confidenceUpper: arimaChart.data.length > 1 ? arimaChart.data[1] : null
+                        },
+                        pytorch: {
+                            forecast: pytorchChart.data[0],
+                            confidenceLower: pytorchChart.data.length > 1 ? pytorchChart.data[2] : null,
+                            confidenceUpper: pytorchChart.data.length > 1 ? pytorchChart.data[1] : null
+                        }
+                    };
+                    
+                    // Extract historical data
+                    let historicalTrace = null;
+                    for (let i = 0; i < historyChart.data.length; i++) {
+                        if (historyChart.data[i].name === "Historical Sales") {
+                            historicalTrace = historyChart.data[i];
+                            break;
+                        }
+                    }
+                    
+                    // Combine all data into one chart
+                    const combinedData = [];
+                    
+                    // Add historical data first if available
+                    if (historicalTrace) {
+                        historicalTrace.marker.color = 'darkblue';
+                        historicalTrace.name = 'Historical Sales Data';
+                        combinedData.push(historicalTrace);
+                    }
+                    
+                    // Add each model's forecast line with distinctive styling
+                    window.forecastModels.rf.forecast.line.color = 'green';
+                    window.forecastModels.rf.forecast.name = 'Random Forest Forecast';
+                    combinedData.push(window.forecastModels.rf.forecast);
+                    
+                    window.forecastModels.arima.forecast.line.color = 'red';
+                    window.forecastModels.arima.forecast.name = 'ARIMA Forecast';
+                    combinedData.push(window.forecastModels.arima.forecast);
+                    
+                    window.forecastModels.pytorch.forecast.line.color = 'blue';
+                    window.forecastModels.pytorch.forecast.name = 'PyTorch Forecast';
+                    combinedData.push(window.forecastModels.pytorch.forecast);
+                    
+                    // Add confidence intervals with semi-transparent colors matching their models
+                    if (window.forecastModels.rf.confidenceLower) {
+                        window.forecastModels.rf.confidenceLower.fill = 'tonexty';
+                        window.forecastModels.rf.confidenceLower.fillcolor = 'rgba(0, 128, 0, 0.2)';
+                        window.forecastModels.rf.confidenceLower.name = 'RF Confidence Interval';
+                        window.forecastModels.rf.confidenceLower.showlegend = false;
+                        window.forecastModels.rf.confidenceUpper.showlegend = true;
+                        window.forecastModels.rf.confidenceUpper.name = 'RF Confidence Interval';
+                        combinedData.push(window.forecastModels.rf.confidenceUpper);
+                        combinedData.push(window.forecastModels.rf.confidenceLower);
+                    }
+                    
+                    if (window.forecastModels.arima.confidenceLower) {
+                        window.forecastModels.arima.confidenceLower.fill = 'tonexty';
+                        window.forecastModels.arima.confidenceLower.fillcolor = 'rgba(255, 0, 0, 0.2)';
+                        window.forecastModels.arima.confidenceLower.name = 'ARIMA Confidence Interval';
+                        window.forecastModels.arima.confidenceLower.showlegend = false;
+                        window.forecastModels.arima.confidenceUpper.showlegend = true;
+                        window.forecastModels.arima.confidenceUpper.name = 'ARIMA Confidence Interval';
+                        combinedData.push(window.forecastModels.arima.confidenceUpper);
+                        combinedData.push(window.forecastModels.arima.confidenceLower);
+                    }
+                    
+                    if (window.forecastModels.pytorch.confidenceLower) {
+                        window.forecastModels.pytorch.confidenceLower.fill = 'tonexty';
+                        window.forecastModels.pytorch.confidenceLower.fillcolor = 'rgba(0, 0, 255, 0.2)';
+                        window.forecastModels.pytorch.confidenceLower.name = 'PyTorch Confidence Interval';
+                        window.forecastModels.pytorch.confidenceLower.showlegend = false;
+                        window.forecastModels.pytorch.confidenceUpper.showlegend = true;
+                        window.forecastModels.pytorch.confidenceUpper.name = 'PyTorch Confidence Interval';
+                        combinedData.push(window.forecastModels.pytorch.confidenceUpper);
+                        combinedData.push(window.forecastModels.pytorch.confidenceLower);
+                    }
+                    
+                    // Use layout from any of the charts
+                    const layout = rfChart.layout;
+                    layout.title = 'Forecast Model Comparison';
+                    layout.width = null;  // Use container width
+                    layout.autosize = true;
+                    layout.margin = {l: 60, r: 30, b: 60, t: 80, pad: 4};
+                    
+                    // Clear loading indicator and render chart
+                    document.getElementById('detailed-forecast-chart').innerHTML = '';
+                    Plotly.newPlot('detailed-forecast-chart', combinedData, layout);
+                    
+                    // Extract forecast values for metrics and distribution
+                    const rfValues = window.forecastModels.rf.forecast.y;
+                    
+                    // Create the forecast distribution histogram
+                    const histogramData = [{
+                        x: rfValues,
+                        type: 'histogram',
+                        marker: {
+                            color: 'rgba(0, 123, 255, 0.7)',
+                            line: {
+                                color: 'rgba(0, 123, 255, 1)',
+                                width: 1
+                            }
+                        }
+                    }];
+                
+                const histogramLayout = {
+                    title: 'Forecast Value Distribution',
+                    xaxis: { title: 'Forecast Value' },
+                    yaxis: { title: 'Frequency' },
+                    margin: { l: 50, r: 30, b: 50, t: 80 }
+                };
+                
+                Plotly.newPlot('forecast-distribution-chart', histogramData, histogramLayout);
+                
+                // Update metrics
+                if (forecastValues && forecastValues.length > 0) {
+                    // Get last 7 days data (from 07/08/2025)
+                    const last7Days = forecastValues.slice(Math.max(0, forecastValues.length - 7));
+                    const mean = last7Days.reduce((a, b) => a + b, 0) / last7Days.length;
+                    const min = Math.min(...last7Days);
+                    const max = Math.max(...last7Days);
+                    const total = last7Days.reduce((a, b) => a + b, 0);
+                    
+                    document.getElementById('metric-mean').textContent = mean.toFixed(2) + ' units/day';
+                    document.getElementById('metric-min').textContent = min.toFixed(2) + ' units';
+                    document.getElementById('metric-max').textContent = max.toFixed(2) + ' units';
+                    document.getElementById('metric-accuracy').textContent = '95%'; // Updated confidence level
+                    
+                    // Determine trend (simple calculation - last value compared to first)
+                    const firstVal = forecastValues[0];
+                    const lastVal = forecastValues[forecastValues.length - 1];
+                    let trendText = 'Flat';
+                    let trendClass = 'text-secondary';
+                    
+                    if (lastVal > firstVal * 1.05) {
+                        trendText = 'Increasing';
+                        trendClass = 'text-success';
+                    } else if (lastVal < firstVal * 0.95) {
+                        trendText = 'Decreasing';
+                        trendClass = 'text-danger';
+                    }
+                    
+                    document.getElementById('metric-trend').innerHTML = `<span class="${trendClass}"><i class="fas ${lastVal > firstVal ? 'fa-arrow-up' : lastVal < firstVal ? 'fa-arrow-down' : 'fa-arrow-right'}"></i> ${trendText}</span>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading chart:', error);
+                document.getElementById('detailed-forecast-chart').innerHTML = 
+                    '<div class="alert alert-danger">Error loading forecast data</div>';
+            });
+            
+        // Add toggle handlers for all forecast models and data visualization options
+        
+        // Toggle RF model
+        document.getElementById('toggle-rf').addEventListener('change', function() {
+            const chart = document.getElementById('detailed-forecast-chart');
+            if (chart.data) {
+                // Find RF traces by name
+                const indices = [];
+                for (let i = 0; i < chart.data.length; i++) {
+                    if (chart.data[i].name === 'Random Forest Forecast' || 
+                        chart.data[i].name === 'RF Confidence Interval') {
+                        indices.push(i);
+                    }
+                }
+                
+                // Toggle visibility
+                const visibility = this.checked ? true : false;
+                if (indices.length > 0) {
+                    Plotly.restyle(chart, {'visible': visibility}, indices);
+                }
+            }
+        });
+        
+        // Toggle ARIMA model
+        document.getElementById('toggle-arima').addEventListener('change', function() {
+            const chart = document.getElementById('detailed-forecast-chart');
+            if (chart.data) {
+                // Find ARIMA traces by name
+                const indices = [];
+                for (let i = 0; i < chart.data.length; i++) {
+                    if (chart.data[i].name === 'ARIMA Forecast' || 
+                        chart.data[i].name === 'ARIMA Confidence Interval') {
+                        indices.push(i);
+                    }
+                }
+                
+                // Toggle visibility
+                const visibility = this.checked ? true : false;
+                if (indices.length > 0) {
+                    Plotly.restyle(chart, {'visible': visibility}, indices);
+                }
+            }
+        });
+        
+        // Toggle PyTorch model
+        document.getElementById('toggle-pytorch').addEventListener('change', function() {
+            const chart = document.getElementById('detailed-forecast-chart');
+            if (chart.data) {
+                // Find PyTorch traces by name
+                const indices = [];
+                for (let i = 0; i < chart.data.length; i++) {
+                    if (chart.data[i].name === 'PyTorch Forecast' || 
+                        chart.data[i].name === 'PyTorch Confidence Interval') {
+                        indices.push(i);
+                    }
+                }
+                
+                // Toggle visibility
+                const visibility = this.checked ? true : false;
+                if (indices.length > 0) {
+                    Plotly.restyle(chart, {'visible': visibility}, indices);
+                }
+            }
+        });
+        
+        // Toggle confidence intervals for all models
+        document.getElementById('toggle-confidence').addEventListener('change', function() {
+            const chart = document.getElementById('detailed-forecast-chart');
+            if (chart.data) {
+                // Find all confidence interval traces
+                const indices = [];
+                for (let i = 0; i < chart.data.length; i++) {
+                    if (chart.data[i].name && chart.data[i].name.includes('Confidence Interval')) {
+                        indices.push(i);
+                    }
+                }
+                
+                // Toggle visibility
+                const visibility = this.checked ? true : false;
+                if (indices.length > 0) {
+                    Plotly.restyle(chart, {'visible': visibility}, indices);
+                }
+            }
+        });
+        
+        // Toggle historical sales data
+        document.getElementById('toggle-actual').addEventListener('change', function() {
+            const chart = document.getElementById('detailed-forecast-chart');
+            if (chart.data) {
+                // Find historical data trace
+                const indices = [];
+                for (let i = 0; i < chart.data.length; i++) {
+                    if (chart.data[i].name === 'Historical Sales Data') {
+                        indices.push(i);
+                    }
+                }
+                
+                // Toggle visibility
+                const visibility = this.checked ? true : false;
+                if (indices.length > 0) {
+                    Plotly.restyle(chart, {'visible': visibility}, indices);
+                }
+            }
+        });
+        
+        // Toggle trend lines
+        document.getElementById('toggle-trends').addEventListener('change', function() {
+            const chart = document.getElementById('detailed-forecast-chart');
+            // When checked, add trend lines for each visible forecast
+            if (this.checked) {
+                // For each forecast model, calculate and add trend line
+                const trendLines = [];
+                const models = ['rf', 'arima', 'pytorch'];
+                const colors = {rf: 'green', arima: 'red', pytorch: 'blue'};
+                
+                models.forEach(model => {
+                    if (window.forecastModels && window.forecastModels[model]) {
+                        const forecast = window.forecastModels[model].forecast;
+                        if (forecast && forecast.x && forecast.y) {
+                            // Simple linear regression to get trend
+                            const x = Array.from({length: forecast.y.length}, (_, i) => i);
+                            const y = forecast.y;
+                            
+                            // Calculate trend line
+                            const n = x.length;
+                            const sum_x = x.reduce((a, b) => a + b, 0);
+                            const sum_y = y.reduce((a, b) => a + b, 0);
+                            const sum_xy = x.map((xi, i) => xi * y[i]).reduce((a, b) => a + b, 0);
+                            const sum_xx = x.map(xi => xi * xi).reduce((a, b) => a + b, 0);
+                            
+                            const slope = (n * sum_xy - sum_x * sum_y) / (n * sum_xx - sum_x * sum_x);
+                            const intercept = (sum_y - slope * sum_x) / n;
+                            
+                            // Create trend line
+                            const trend_x = [...forecast.x];
+                            const trend_y = x.map(xi => intercept + slope * xi);
+                            
+                            trendLines.push({
+                                x: trend_x,
+                                y: trend_y,
+                                mode: 'lines',
+                                name: `${model.toUpperCase()} Trend`,
+                                line: {
+                                    color: colors[model],
+                                    width: 2,
+                                    dash: 'dash'
+                                }
+                            });
+                        }
+                    }
+                });
+                
+                // Add trend lines to chart
+                if (trendLines.length > 0) {
+                    Plotly.addTraces(chart, trendLines);
+                }
+            } else {
+                // When unchecked, remove trend lines
+                const indicesToRemove = [];
+                for (let i = 0; i < chart.data.length; i++) {
+                    if (chart.data[i].name && chart.data[i].name.includes('Trend')) {
+                        indicesToRemove.push(i);
+                    }
+                }
+                
+                if (indicesToRemove.length > 0) {
+                    Plotly.deleteTraces(chart, indicesToRemove);
+                }
+            }
+        });
+        
+        // Export buttons functionality (placeholder - would connect to actual download endpoints)
+        document.getElementById('export-png').addEventListener('click', function() {
+            Plotly.downloadImage('detailed-forecast-chart', {
+                format: 'png', 
+                filename: 'sales_forecast'
+            });
+        });
+        
+        document.getElementById('export-svg').addEventListener('click', function() {
+            Plotly.downloadImage('detailed-forecast-chart', {
+                format: 'svg', 
+                filename: 'sales_forecast'
+            });
+        });
+        
+        document.getElementById('export-csv').addEventListener('click', function() {
+            // In a real implementation, this would call a server endpoint
+            alert('CSV Export would download data from server');
+        });
+        
+        // Store dropdown change event - update product options
+        document.getElementById('store-select').addEventListener('change', function() {
+            loadProductOptions(this.value);
+        });
+        
+        // Handle product name toggle
+        document.getElementById('toggle-product-name').addEventListener('change', function() {
+            // Reload product options with new display format
+            loadProductOptions(document.getElementById('store-select').value);
+        });
+        
+        // Apply filters button - load all models with new filters
+        document.getElementById('apply-filters').addEventListener('click', function() {
+            // Get selected values
+            const storeId = document.getElementById('store-select').value;
+            const productId = document.getElementById('product-select').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const datePreset = document.getElementById('date-preset').value;
+            
+            // Build query parameters
+            const params = new URLSearchParams();
+            if (storeId !== 'all') params.append('store_id', storeId);
+            if (productId !== 'all') params.append('product_id', productId);
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+            if (datePreset !== 'full') params.append('timespan', datePresetToTimespan(datePreset));
+            
+            // Call the loadAllForecastModels function with new filters
+            loadAllForecastModels();
+            
+            // Also update forecast distribution data
+            const queryString = params.toString();
+            const queryPrefix = queryString ? '?' : '';
+            
+            fetch(`/api/forecast-distribution-data${queryPrefix}${queryString}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Parse the distribution data
+                    const chartData = JSON.parse(data);
+                    
+                    // Update the distribution chart
+                    const distChart = document.getElementById('forecast-distribution-chart');
+                    distChart.innerHTML = '';
+                    Plotly.newPlot('forecast-distribution-chart', chartData.data, chartData.layout);
+                })
+                .catch(error => {
+                    console.error('Error loading distribution chart:', error);
+                });
+                
+        });
+        
+        // Date preset change handler
+        document.getElementById('date-preset').addEventListener('change', function() {
+            const preset = this.value;
+            const today = new Date();
+            let startDate, endDate;
+            
+            switch(preset) {
+                case 'last7':
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - 7);
+                    endDate = new Date(today);
+                    break;
+                case 'last30':
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - 30);
+                    endDate = new Date(today);
+                    break;
+                case 'last90':
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - 90);
+                    endDate = new Date(today);
+                    break;
+                case 'next7':
+                    startDate = new Date(today);
+                    endDate = new Date(today);
+                    endDate.setDate(today.getDate() + 7);
+                    break;
+                case 'next30':
+                    startDate = new Date(today);
+                    endDate = new Date(today);
+                    endDate.setDate(today.getDate() + 30);
+                    break;
+                case 'next90':
+                    startDate = new Date(today);
+                    endDate = new Date(today);
+                    endDate.setDate(today.getDate() + 90);
+                    break;
+                default:
+                    // Full range - clear the date inputs
+                    document.getElementById('start-date').value = '';
+                    document.getElementById('end-date').value = '';
+                    return;
+            }
+            
+            // Format dates for input fields (YYYY-MM-DD)
+            document.getElementById('start-date').value = startDate.toISOString().split('T')[0];
+            document.getElementById('end-date').value = endDate.toISOString().split('T')[0];
+        });
+    });
+    
+    // Helper function to convert date preset to timespan days
+    function datePresetToTimespan(preset) {
+        switch(preset) {
+            case 'last7': case 'next7': return '7';
+            case 'last30': case 'next30': return '30';
+            case 'last90': case 'next90': return '90';
+            default: return '60'; // Default value
+        }
+    }
+    
+    // Update forecast distribution chart based on forecast data
+    function updateForecastDistribution(chartData) {
+        if (!chartData || !chartData.data || !chartData.data[0] || !chartData.data[0].y) {
+            return;
+        }
+        
+        const forecastValues = chartData.data[0].y;
+        const histogramData = [{
+            x: forecastValues,
+            type: 'histogram',
+            marker: {
+                color: 'rgba(0, 123, 255, 0.7)',
+                line: {
+                    color: 'rgba(0, 123, 255, 1)',
+                    width: 1
+                }
+            }
+        }];
+        
+        const histogramLayout = {
+            title: 'Forecast Value Distribution',
+            xaxis: { title: 'Forecast Value' },
+            yaxis: { title: 'Frequency' },
+            margin: { l: 50, r: 30, b: 50, t: 80 }
+        };
+        
+        Plotly.newPlot('forecast-distribution-chart', histogramData, histogramLayout);
+    }
+    
+    // Update forecast metrics based on forecast data
+    function updateForecastMetrics(chartData) {
+        if (!chartData || !chartData.data || !chartData.data[0] || !chartData.data[0].y) {
+            return;
+        }
+        
+        const forecastValues = chartData.data[0].y;
+        
+        if (forecastValues && forecastValues.length > 0) {
+            const mean = forecastValues.reduce((a, b) => a + b, 0) / forecastValues.length;
+            const min = Math.min(...forecastValues);
+            const max = Math.max(...forecastValues);
+            
+            document.getElementById('metric-mean').textContent = mean.toFixed(2);
+            document.getElementById('metric-min').textContent = min.toFixed(2);
+            document.getElementById('metric-max').textContent = max.toFixed(2);
+            document.getElementById('metric-accuracy').textContent = '92%'; // Placeholder
+            
+            // Determine trend (simple calculation - last value compared to first)
+            const firstVal = forecastValues[0];
+            const lastVal = forecastValues[forecastValues.length - 1];
+            let trendText = 'Flat';
+            let trendClass = 'text-secondary';
+            
+            if (lastVal > firstVal * 1.05) {
+                trendText = 'Increasing';
+                trendClass = 'text-success';
+            } else if (lastVal < firstVal * 0.95) {
+                trendText = 'Decreasing';
+                trendClass = 'text-danger';
+            }
+            
+            document.getElementById('metric-trend').innerHTML = 
+                `<span class="${trendClass}"><i class="fas ${lastVal > firstVal ? 'fa-arrow-up' : lastVal < firstVal ? 'fa-arrow-down' : 'fa-arrow-right'}"></i> ${trendText}</span>`;
+        }
+    }
+    
+    // Function to load store options
+    function loadStoreOptions() {
+        fetch('/api/store-dropdown-data')
+            .then(response => response.json())
+            .then(data => {
+                const storeSelect = document.getElementById('store-select');
+                // Clear existing options except the first one (All Stores)
+                while (storeSelect.options.length > 1) {
+                    storeSelect.remove(1);
+                }
+                
+                // Add new options
+                data.stores.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store.id;
+                    option.textContent = store.name;
+                    storeSelect.appendChild(option);
+                });
+                
+                // Set default selection if only one store
+                if (data.stores.length === 1) {
+                    storeSelect.value = data.stores[0].id;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading store options:', error);
+            });
+    }
+    
+    // Function to load product options
+    function loadProductOptions(storeId = 'all') {
+        // Build URL with store filter if provided
+        const url = storeId !== 'all' ? 
+            `/api/product-dropdown-data?store_id=${storeId}` : 
+            '/api/product-dropdown-data';
+            
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const productSelect = document.getElementById('product-select');
+                // Clear existing options except the first one (All Products)
+                while (productSelect.options.length > 1) {
+                    productSelect.remove(1);
+                }
+                
+                // Get product display mode
+                const showProductName = document.getElementById('toggle-product-name').checked;
+                
+                // Add new options
+                data.products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = showProductName ? 
+                        `${product.name} (${product.size})` : 
+                        `${product.id} (${product.size})`;
+                    option.dataset.name = product.name;
+                    option.dataset.id = product.id;
+                    productSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading product options:', error);
+            });
+    }
+</script>
+{% endblock %}

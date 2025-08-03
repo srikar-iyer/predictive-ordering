@@ -1,0 +1,120 @@
+/**
+ * CSS styles for interactive features in the 
+ * Pizza Predictive Ordering System dashboard.
+ */
+
+/* Enhanced tooltip styles */
+.enhanced-tooltip {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 12px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    pointer-events: none;
+    max-width: 300px;
+    opacity: 0.95;
+    transition: opacity 0.2s;
+    /* Use CSS variables for consistency */
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    color: var(--text-color);
+}
+
+.enhanced-tooltip:hover {
+    opacity: 1;
+}
+
+/* Tooltip internal structure - replacing inline JS styles */
+.tooltip-title {
+    font-weight: bold; 
+    margin-bottom: 5px; 
+    border-bottom: 1px solid #eee; 
+    padding-bottom: 3px;
+}
+
+.tooltip-row {
+    display: flex; 
+    justify-content: space-between; 
+    margin-bottom: 2px;
+}
+
+.tooltip-label {
+    font-weight: 600; 
+    margin-right: 10px;
+}
+
+/* Chart interaction styles */
+.js-plotly-plot .plotly .select-outline {
+    stroke: #e74c3c !important;
+    stroke-width: 2px !important;
+}
+
+.js-plotly-plot .plotly .select-outline-1 {
+    stroke: rgba(231, 76, 60, 0.3) !important;
+    stroke-width: 4px !important;
+    fill: rgba(231, 76, 60, 0.1) !important;
+}
+
+/* Crossfilter highlighting */
+.js-plotly-plot .plotly .filtered {
+    opacity: 0.3;
+    transition: opacity 0.3s;
+}
+
+.js-plotly-plot .plotly .highlighted {
+    opacity: 1;
+    stroke-width: 2px;
+    stroke: #2c3e50;
+}
+
+/* Zoom and pan indicators */
+.js-plotly-plot .plotly .zoombox {
+    fill: rgba(231, 76, 60, 0.1) !important;
+    stroke: #e74c3c !important;
+}
+
+.js-plotly-plot .plotly .drag-layer {
+    cursor: move;
+}
+
+/* Drill-down modal customization */
+#drill-down-modal .modal-header {
+    background: linear-gradient(135deg, var(--primary-color), #1a252f);
+    color: var(--light-text);
+    border-bottom: 3px solid var(--secondary-color);
+}
+
+#drill-down-modal .modal-body {
+    padding: 20px;
+}
+
+/* Customize chart hover */
+.js-plotly-plot .plotly .hoverlayer .hovertext {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 4px !important;
+}
+
+.js-plotly-plot .plotly .hoverlayer .hovertext .bg {
+    fill: rgba(255, 255, 255, 0.95) !important;
+    stroke: #ccc !important;
+}
+
+.js-plotly-plot .plotly .hoverlayer .hovertext text {
+    font-family: 'Roboto', Arial, sans-serif !important;
+    font-size: 12px !important;
+    fill: #333 !important;
+}
+
+/* Moved responsive chart interactions to responsive.css */
+
+/* Animation for chart transitions */
+.js-plotly-plot .plotly .traces .scatter .points path {
+    transition: opacity 0.3s, fill 0.3s, stroke-width 0.3s !important;
+}
+
+.js-plotly-plot .plotly .traces .bar rect {
+    transition: opacity 0.3s, fill 0.3s !important;
+}

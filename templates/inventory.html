@@ -1,0 +1,653 @@
+{% extends "base.html" %}
+
+{% block title %}Predictive Ordering System - Inventory Management{% endblock %}
+
+{% block head_extra %}
+<style>
+    .chart-container {
+        height: 500px;
+        margin-bottom: 20px;
+    }
+    .control-panel {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .inventory-kpi {
+        border-left: 4px solid #17a2b8;
+        text-align: center;
+    }
+    .kpi-value {
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .kpi-label {
+        font-size: 14px;
+        color: #6c757d;
+    }
+    .inventory-level-normal {
+        color: #28a745;
+    }
+    .inventory-level-warning {
+        color: #ffc107;
+    }
+    .inventory-level-alert {
+        color: #dc3545;
+    }
+    .model-comparison-table th,
+    .model-comparison-table td {
+        padding: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>Inventory Management</h2>
+        <p>Monitor inventory levels, optimize stock, and prevent stockouts with forecast model integration.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Control Panel -->
+    <div class="col-md-12">
+        <div class="card control-panel">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="store-select" class="form-label">Store</label>
+                            <select class="form-select" id="store-select">
+                                <!-- Store options will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="product-select" class="form-label">Product</label>
+                            <select class="form-select" id="product-select">
+                                <!-- Product options will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="forecast-model" class="form-label">Forecast Model</label>
+                            <select class="form-select" id="forecast-model">
+                                <option value="rf" selected>Random Forest</option>
+                                <option value="arima">ARIMA</option>
+                                <option value="pytorch">PyTorch</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button id="update-inventory" class="btn btn-primary w-100">Update Projection</button>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="date-preset" class="form-label">Date Range</label>
+                            <select class="form-select" id="date-preset">
+                                <option value="full" selected>Full Range</option>
+                                <option value="last7">Last 7 Days</option>
+                                <option value="last30">Last 30 Days</option>
+                                <option value="last90">Last 90 Days</option>
+                                <option value="next7">Next 7 Days</option>
+                                <option value="next30">Next 30 Days</option>
+                                <option value="next90">Next 90 Days</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date-range" class="form-label">Custom Date Range</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="start-date">
+                                <span class="input-group-text">to</span>
+                                <input type="date" class="form-control" id="end-date">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 d-flex justify-content-end align-items-center">
+                        <div class="form-check form-switch me-3">
+                            <input class="form-check-input" type="checkbox" id="toggle-safety-stock" checked>
+                            <label class="form-check-label" for="toggle-safety-stock">Safety Stock</label>
+                        </div>
+                        <div class="form-check form-switch me-3">
+                            <input class="form-check-input" type="checkbox" id="toggle-target-stock" checked>
+                            <label class="form-check-label" for="toggle-target-stock">Target Stock</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="toggle-forecast" checked>
+                            <label class="form-check-label" for="toggle-forecast">Forecast</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Row -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card inventory-kpi">
+            <div class="card-body">
+                <div class="kpi-value inventory-level-normal" id="current-stock">85</div>
+                <div class="kpi-label">Current Stock</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card inventory-kpi">
+            <div class="card-body">
+                <div class="kpi-value" id="weeks-supply">2.4</div>
+                <div class="kpi-label">Weeks of Supply</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card inventory-kpi">
+            <div class="card-body">
+                <div class="kpi-value" id="days-to-reorder">9</div>
+                <div class="kpi-label">Days to Reorder</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card inventory-kpi">
+            <div class="card-body">
+                <div class="kpi-value">
+                    <span id="stock-status" class="badge bg-success">Adequate</span>
+                </div>
+                <div class="kpi-label">Stock Status</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Inventory Level Chart -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Inventory Projection with Forecast</h5>
+                <div class="btn-group float-end" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-inventory-png">
+                        <i class="fas fa-download"></i> PNG
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-inventory-csv">
+                        <i class="fas fa-download"></i> CSV
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="inventory-chart" class="chart-container">
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stock Adjustment Panel -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5><i class="fas fa-truck-loading"></i> Order Recommendation</h5>
+            </div>
+            <div class="card-body" id="order-recommendation">
+                <div class="alert alert-success">
+                    <h5 class="alert-heading">Stock Level Adequate</h5>
+                    <p class="mb-0">Current stock levels are sufficient. No action needed at this time.</p>
+                </div>
+                
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Order Point</th>
+                        <td><span id="order-point">30</span> units</td>
+                    </tr>
+                    <tr>
+                        <th>Target Stock</th>
+                        <td><span id="target-stock">80</span> units</td>
+                    </tr>
+                    <tr>
+                        <th>Avg Daily Demand</th>
+                        <td><span id="avg-demand">5</span> units</td>
+                    </tr>
+                    <tr>
+                        <th>Lead Time</th>
+                        <td>3 days</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-light">
+                <h5><i class="fas fa-sliders-h"></i> Inventory Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="safety-stock-level" class="form-label">Safety Stock Level</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="safety-stock-level" value="30" min="0">
+                        <button class="btn btn-outline-primary" type="button" id="update-safety-stock">Update</button>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="target-stock-level" class="form-label">Target Stock Level</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="target-stock-level" value="80" min="0">
+                        <button class="btn btn-outline-primary" type="button" id="update-target-stock">Update</button>
+                    </div>
+                </div>
+                
+                <div class="d-grid">
+                    <button class="btn btn-success" id="calculate-optimal">Calculate Optimal Values</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Forecast Model Impact -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Forecast Model Impact on Inventory</h5>
+            </div>
+            <div class="card-body">
+                <p>Different forecasting models yield different inventory projections. The table below shows how each model impacts key inventory metrics.</p>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped model-comparison-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Forecast Model</th>
+                                <th>Est. Days to Reorder</th>
+                                <th>Recommended Order</th>
+                                <th>Stockout Risk</th>
+                                <th>Excess Stock Risk</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Random Forest</td>
+                                <td>9 days</td>
+                                <td>0 units</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td><span class="badge bg-warning text-dark">Medium</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary model-select-btn" data-model="rf">
+                                        Select
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>ARIMA</td>
+                                <td>8 days</td>
+                                <td>0 units</td>
+                                <td><span class="badge bg-warning text-dark">Medium</span></td>
+                                <td><span class="badge bg-warning text-dark">Medium</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary model-select-btn" data-model="arima">
+                                        Select
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>PyTorch</td>
+                                <td>11 days</td>
+                                <td>0 units</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary model-select-btn" data-model="pytorch">
+                                        Select
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    The PyTorch model typically provides the most balanced inventory projections for this product category, with lower overall risk.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/date-range-utility.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load dropdown data first
+        loadStoreOptions();
+        loadProductOptions();
+        
+        // Load inventory projection on page load
+        loadInventoryProjection();
+        
+        // Export buttons functionality
+        document.getElementById('export-inventory-png').addEventListener('click', function() {
+            Plotly.downloadImage('inventory-chart', {
+                format: 'png', 
+                filename: 'inventory_projection'
+            });
+        });
+        
+        // Handle form submission
+        // Store dropdown change event - update product options
+        document.getElementById('store-select').addEventListener('change', function() {
+            loadProductOptions(this.value);
+        });
+        
+        document.getElementById('update-inventory').addEventListener('click', function() {
+            loadInventoryProjection();
+        });
+        
+        // Update metrics when forecast model changes
+        document.getElementById('forecast-model').addEventListener('change', function() {
+            updateInventoryMetrics(this.value);
+        });
+        
+        // Handle model select buttons
+        document.querySelectorAll('.model-select-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const model = this.getAttribute('data-model');
+                document.getElementById('forecast-model').value = model;
+                loadInventoryProjection();
+                updateInventoryMetrics(model);
+            });
+        });
+        
+        // Handle toggle switches
+        document.getElementById('toggle-safety-stock').addEventListener('change', function() {
+            const visible = this.checked;
+            updateChartVisibility('Safety Stock', visible);
+        });
+        
+        document.getElementById('toggle-target-stock').addEventListener('change', function() {
+            const visible = this.checked;
+            updateChartVisibility('Target Stock', visible);
+        });
+        
+        document.getElementById('toggle-forecast').addEventListener('change', function() {
+            const visible = this.checked;
+            updateChartVisibility('Forecast', visible);
+        });
+        
+        // Update buttons functionality
+        document.getElementById('update-safety-stock').addEventListener('click', function() {
+            const safetyStockLevel = document.getElementById('safety-stock-level').value;
+            document.getElementById('order-point').textContent = safetyStockLevel;
+            loadInventoryProjection(); // Reload chart
+        });
+        
+        document.getElementById('update-target-stock').addEventListener('click', function() {
+            const targetStockLevel = document.getElementById('target-stock-level').value;
+            document.getElementById('target-stock').textContent = targetStockLevel;
+            loadInventoryProjection(); // Reload chart
+        });
+        
+        document.getElementById('calculate-optimal').addEventListener('click', function() {
+            // In a real implementation, this would call an API to calculate optimal values
+            const forecastModel = document.getElementById('forecast-model').value;
+            
+            // Set placeholder optimal values based on selected model
+            if (forecastModel === 'rf') {
+                document.getElementById('safety-stock-level').value = '30';
+                document.getElementById('target-stock-level').value = '80';
+            } else if (forecastModel === 'arima') {
+                document.getElementById('safety-stock-level').value = '35';
+                document.getElementById('target-stock-level').value = '85';
+            } else if (forecastModel === 'pytorch') {
+                document.getElementById('safety-stock-level').value = '25';
+                document.getElementById('target-stock-level').value = '75';
+            }
+            
+            // Update display values
+            document.getElementById('order-point').textContent = document.getElementById('safety-stock-level').value;
+            document.getElementById('target-stock').textContent = document.getElementById('target-stock-level').value;
+            
+            // Show confirmation
+            alert(`Optimal inventory parameters calculated based on ${forecastModel.toUpperCase()} forecast model`);
+            
+            loadInventoryProjection(); // Reload chart
+        });
+        
+        // Function to update chart trace visibility
+        function updateChartVisibility(traceName, visible) {
+            const chart = document.getElementById('inventory-chart');
+            if (!chart || !chart.data) return;
+            
+            // Find the trace by name
+            const traceIndex = chart.data.findIndex(trace => trace.name.includes(traceName));
+            if (traceIndex >= 0) {
+                Plotly.restyle('inventory-chart', {'visible': visible}, [traceIndex]);
+            }
+        }
+    });
+    
+    // Function to load store options
+    function loadStoreOptions() {
+        fetch('/api/store-dropdown-data')
+            .then(response => response.json())
+            .then(data => {
+                const storeSelect = document.getElementById('store-select');
+                // Clear existing options
+                storeSelect.innerHTML = '';
+                
+                // Add new options
+                data.stores.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store.id;
+                    option.textContent = store.name;
+                    storeSelect.appendChild(option);
+                });
+                
+                // Set default selection if only one store
+                if (data.stores.length === 1) {
+                    storeSelect.value = data.stores[0].id;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading store options:', error);
+                // Fallback to default option
+                document.getElementById('store-select').innerHTML = 
+                    '<option value="104.0">Store 104</option>';
+            });
+    }
+    
+    // Function to load product options
+    function loadProductOptions(storeId = null) {
+        // Build URL with store filter if provided
+        let url = '/api/product-dropdown-data';
+        if (storeId) {
+            url += `?store_id=${storeId}`;
+        }
+            
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const productSelect = document.getElementById('product-select');
+                // Clear existing options
+                productSelect.innerHTML = '';
+                
+                // Add new options
+                data.products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = `${product.name} (${product.size})`;
+                    productSelect.appendChild(option);
+                });
+                
+                // Set default to first product if available
+                if (data.products.length > 0) {
+                    productSelect.value = data.products[0].id;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading product options:', error);
+                // Fallback to default option
+                document.getElementById('product-select').innerHTML = 
+                    '<option value="3913116850.0">BELLATORIA BBQ CHK PIZZA</option>';
+            });
+    }
+    
+    // Function to fetch and display inventory projection with forecast
+    function loadInventoryProjection() {
+        // Get form values
+        const storeId = document.getElementById('store-select').value;
+        const productId = document.getElementById('product-select').value;
+        const forecastModel = document.getElementById('forecast-model').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        // Build query string
+        let queryParams = [];
+        if (storeId) queryParams.push(`store_id=${storeId}`);
+        if (productId) queryParams.push(`product_id=${productId}`);
+        if (forecastModel) queryParams.push(`forecast_model=${forecastModel}`);
+        if (startDate) queryParams.push(`start_date=${startDate}`);
+        if (endDate) queryParams.push(`end_date=${endDate}`);
+        const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+        
+        // Show loading indicator
+        document.getElementById('inventory-chart').innerHTML = `
+            <div class="d-flex justify-content-center align-items-center h-100">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+        
+        // Fetch inventory projection data
+        fetch(`/api/inventory-forecast-data${queryString}`)
+            .then(response => response.json())
+            .then(data => {
+                const chartData = JSON.parse(data);
+                Plotly.newPlot('inventory-chart', chartData.data, chartData.layout);
+                
+                // Update inventory metrics based on forecast model
+                updateInventoryMetrics(forecastModel);
+            })
+            .catch(error => {
+                console.error('Error loading inventory projection:', error);
+                document.getElementById('inventory-chart').innerHTML = 
+                    `<div class="alert alert-danger">Error loading inventory projection: ${error.message}</div>`;
+            });
+    }
+    
+    // Function to update inventory metrics based on forecast model
+    function updateInventoryMetrics(forecastModel) {
+        // In a real implementation, this would fetch data from an API endpoint
+        // Here, we'll simulate different metrics for each forecast model
+        
+        const metrics = {
+            rf: {
+                currentStock: 85,
+                weeksSupply: 2.4,
+                stockStatus: 'Adequate',
+                statusClass: 'success',
+                daysToReorder: 9,
+                orderPoint: 30,
+                targetStock: 80,
+                avgDemand: 5,
+                recommendation: {
+                    type: 'success',
+                    heading: 'Stock Level Adequate',
+                    message: 'Current stock levels are sufficient. No action needed at this time.'
+                }
+            },
+            arima: {
+                currentStock: 85,
+                weeksSupply: 2.1,
+                stockStatus: 'Adequate',
+                statusClass: 'success',
+                daysToReorder: 8,
+                orderPoint: 35,
+                targetStock: 85,
+                avgDemand: 6,
+                recommendation: {
+                    type: 'success',
+                    heading: 'Stock Level Adequate',
+                    message: 'Current stock levels are sufficient, but monitor closely as forecast predicts higher demand.'
+                }
+            },
+            pytorch: {
+                currentStock: 85,
+                weeksSupply: 2.8,
+                stockStatus: 'Adequate',
+                statusClass: 'success',
+                daysToReorder: 11,
+                orderPoint: 25,
+                targetStock: 75,
+                avgDemand: 4,
+                recommendation: {
+                    type: 'success',
+                    heading: 'Stock Level Optimal',
+                    message: 'Current stock levels are optimal based on PyTorch forecast model.'
+                }
+            }
+        };
+        
+        const model = metrics[forecastModel];
+        
+        // Update metrics in the UI
+        document.getElementById('current-stock').textContent = model.currentStock;
+        document.getElementById('weeks-supply').textContent = model.weeksSupply;
+        document.getElementById('stock-status').textContent = model.stockStatus;
+        document.getElementById('stock-status').className = `badge bg-${model.statusClass}`;
+        document.getElementById('days-to-reorder').textContent = model.daysToReorder;
+        document.getElementById('order-point').textContent = model.orderPoint;
+        document.getElementById('target-stock').textContent = model.targetStock;
+        document.getElementById('avg-demand').textContent = model.avgDemand;
+        
+        // Update form input values
+        document.getElementById('safety-stock-level').value = model.orderPoint;
+        document.getElementById('target-stock-level').value = model.targetStock;
+        
+        // Update recommendation
+        document.getElementById('order-recommendation').innerHTML = `
+            <div class="alert alert-${model.recommendation.type}">
+                <h5 class="alert-heading">${model.recommendation.heading}</h5>
+                <p class="mb-0">${model.recommendation.message}</p>
+            </div>
+            
+            <table class="table table-bordered">
+                <tr>
+                    <th>Order Point</th>
+                    <td>${model.orderPoint} units</td>
+                </tr>
+                <tr>
+                    <th>Target Stock</th>
+                    <td>${model.targetStock} units</td>
+                </tr>
+                <tr>
+                    <th>Avg Daily Demand</th>
+                    <td>${model.avgDemand} units</td>
+                </tr>
+                <tr>
+                    <th>Lead Time</th>
+                    <td>3 days</td>
+                </tr>
+            </table>
+        `;
+    }
+</script>
+{% endblock %}

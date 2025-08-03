@@ -1,0 +1,135 @@
+/**
+ * Dashboard specific fixes for the Pizza Predictive Ordering System
+ * This file addresses specific CSS issues with the dashboard layout and components
+ */
+
+/* General fixes for the dashboard container */
+.dashboard-container {
+  display: block !important;
+  width: 100% !important;
+}
+
+/* Fix tab bar visibility issues */
+#main-tabs {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  white-space: nowrap !important;
+  border-bottom: 1px solid #dee2e6 !important;
+  margin-bottom: 1rem !important;
+  width: 100% !important;
+  padding-left: 0 !important;
+  list-style: none !important;
+}
+
+/* Ensure tab items are visible */
+#main-tabs .nav-item {
+  display: block !important;
+  margin-bottom: -1px !important;
+}
+
+/* Fix tab link styling */
+#main-tabs .nav-link {
+  display: flex !important;
+  align-items: center !important;
+  padding: 0.5rem 1rem !important;
+  border: 1px solid transparent !important;
+  border-top-left-radius: 0.25rem !important;
+  border-top-right-radius: 0.25rem !important;
+}
+
+/* Active tab state */
+#main-tabs .nav-link.active {
+  color: #0db7ed !important;
+  background-color: white !important;
+  border-color: #dee2e6 #dee2e6 white !important;
+  font-weight: 600 !important;
+  border-bottom: 3px solid #e74c3c !important;
+}
+
+/* Fix tab content container */
+#tab-content {
+  display: block !important;
+  width: 100% !important;
+}
+
+/* Force display of active tab pane */
+.tab-pane.active {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix chart container styles */
+.chart-container {
+  height: 50vh !important;
+  width: 100% !important;
+}
+
+/* Add container size overrides */
+.container-fluid {
+  width: 100% !important;
+  padding-right: 15px !important;
+  padding-left: 15px !important;
+  margin-right: auto !important;
+  margin-left: auto !important;
+}
+
+/* Fix for modebar buttons */
+.modebar {
+  display: flex !important;
+}
+
+/* Fix toggle switches */
+.toggle-container {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Fix dropdown selectors */
+.Select-control {
+  display: flex !important;
+}
+
+/* Fix date picker */
+.DateInput {
+  display: inline-block !important;
+}
+
+/* Navbar fixes */
+.navbar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+/* Force card display */
+.card {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.card-body {
+  flex: 1 1 auto !important;
+  min-height: 1px !important;
+  padding: 1.25rem !important;
+}
+
+/* Fix hidden items that should be visible */
+[style*="display: none"].nav-item,
+[style*="display:none"].nav-item,
+[style*="visibility: hidden"].nav-item,
+[style*="visibility:hidden"].nav-item {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Ensure icons are visible */
+.nav-link i, 
+.tab-label i {
+  display: inline-block !important;
+  margin-right: 0.5rem !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}

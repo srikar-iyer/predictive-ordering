@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Predictive Ordering System - Error {% endblock %}
+
+{% block head_extra %}
+<style>
+    .error-container {
+        text-align: center;
+        padding: 40px;
+        margin-top: 50px;
+    }
+    .error-code {
+        font-size: 72px;
+        font-weight: bold;
+        color: #dc3545;
+    }
+    .error-message {
+        font-size: 24px;
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="error-container">
+            <div class="error-code">{{ error_code }}</div>
+            <div class="error-message">{{ error_message }}</div>
+            <p class="text-muted">Sorry for the inconvenience. Let's get you back on track.</p>
+            <div class="mt-4">
+                <a href="/" class="btn btn-primary">Go to Dashboard</a>
+                <button onclick="window.history.back()" class="btn btn-outline-secondary ms-2">Go Back</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

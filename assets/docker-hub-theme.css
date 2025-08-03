@@ -1,0 +1,252 @@
+/* Docker Hub Theme CSS
+ * This CSS file provides styling to match the Docker Hub aesthetic
+ * To be included after custom.css
+ */
+
+/* Docker Hub Color Variables */
+:root {
+  --docker-blue: #0db7ed;
+  --docker-dark-blue: #002b36;
+  --docker-light-gray: #f5f7fa;
+  --docker-medium-gray: #eaecef;
+  --docker-dark-gray: #303c42;
+  --docker-text: #24292e;
+  --docker-light-text: #586069;
+  --docker-white: #ffffff;
+  --docker-border: #e1e4e8;
+  --docker-hover: #f8f9fa;
+}
+
+/* Override primary colors */
+.btn-primary {
+  background-color: var(--docker-blue) !important;
+  border-color: var(--docker-blue) !important;
+}
+
+/* Prevent conflicts with custom.css */
+:root {
+  --primary-color: var(--docker-dark-blue); /* Override primary color */
+  --accent-color: var(--docker-blue); /* Override accent color */
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #0c9ecf !important;
+  border-color: #0c9ecf !important;
+  box-shadow: 0 0 0 0.2rem rgba(13, 183, 237, 0.25) !important;
+}
+
+.text-primary {
+  color: var(--docker-blue) !important;
+}
+
+/* Docker Tab Styling - intentionally override standard tabs */
+.docker-tabs .nav-link {
+  color: var(--docker-dark-gray);
+  border-radius: 0;
+  border: none;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  margin-right: 4px;
+  transition: color 0.15s ease-in-out;
+  display: flex;
+  align-items: center;
+}
+
+.docker-tabs .nav-link:hover {
+  color: var(--docker-blue);
+  background-color: var(--docker-hover);
+  border-bottom: 2px solid var(--docker-medium-gray);
+}
+
+.docker-tabs .nav-link.active {
+  color: var(--docker-blue);
+  background-color: var(--docker-white);
+  border-top: 3px solid var(--docker-blue);
+  border-left: 1px solid var(--docker-border);
+  border-right: 1px solid var(--docker-border);
+  border-bottom: none;
+  margin-top: -1px;
+}
+
+.docker-tabs .nav-link i {
+  margin-right: 0.5rem;
+}
+
+/* Card styling */
+.card {
+  border-radius: 3px;
+  border: 1px solid var(--docker-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+
+.card-header {
+  background-color: var(--docker-white);
+  border-bottom: 1px solid var(--docker-border);
+  padding: 0.75rem 1rem;
+}
+
+.card-header h5, .card-header .h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--docker-text);
+}
+
+/* Typography */
+body {
+  color: var(--docker-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--docker-text);
+}
+
+/* Table styling */
+table.table {
+  border: 1px solid var(--docker-border);
+}
+
+table.table thead th {
+  background-color: var(--docker-light-gray);
+  border-bottom: 1px solid var(--docker-border);
+  color: var(--docker-dark-gray);
+  font-weight: 600;
+}
+
+table.table tbody tr:hover {
+  background-color: var(--docker-hover);
+}
+
+/* Form controls */
+.form-control {
+  border-radius: 3px;
+  border: 1px solid var(--docker-border);
+  padding: 0.375rem 0.75rem;
+}
+
+.form-control:focus {
+  border-color: var(--docker-blue);
+  box-shadow: 0 0 0 0.2rem rgba(13, 183, 237, 0.25);
+}
+
+/* Toggle switches */
+.toggle-switch .custom-control-input:checked ~ .custom-control-label::before {
+  background-color: var(--docker-blue);
+  border-color: var(--docker-blue);
+}
+
+/* Dropdowns */
+.dropdown-menu {
+  border-radius: 3px;
+  border: 1px solid var(--docker-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+  background-color: var(--docker-light-gray);
+  color: var(--docker-blue);
+}
+
+/* Charts and Visualizations */
+.plotly-chart {
+  border: 1px solid var(--docker-border);
+  border-radius: 3px;
+}
+
+/* Tooltips */
+.tooltip .tooltip-inner {
+  background-color: var(--docker-dark-gray);
+  color: var(--docker-white);
+  border-radius: 3px;
+}
+
+/* Custom chart control buttons */
+.modebar-btn {
+  color: var(--docker-blue) !important;
+}
+
+/* Date range slider */
+.rc-slider-track {
+  background-color: var(--docker-blue);
+}
+
+.rc-slider-handle {
+  border-color: var(--docker-blue);
+  background-color: var(--docker-white);
+}
+
+.rc-slider-handle:hover, .rc-slider-handle:active {
+  border-color: var(--docker-blue);
+  box-shadow: 0 0 0 3px rgba(13, 183, 237, 0.25);
+}
+
+/* Information cards */
+.info-card {
+  background-color: var(--docker-light-gray);
+  border-left: 4px solid var(--docker-blue);
+}
+
+/* Labels */
+label {
+  font-weight: 500;
+  color: var(--docker-dark-gray);
+}
+
+/* Status indicators */
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.status-success {
+  background-color: #28a745;
+}
+
+.status-warning {
+  background-color: #ffc107;
+}
+
+.status-danger {
+  background-color: #dc3545;
+}
+
+/* Overrides for specific components */
+.forecast-chart .modebar-container {
+  right: 8px !important;
+  top: 8px !important;
+}
+
+/* For the navbar logo */
+.navbar-brand img {
+  height: 30px;
+}
+
+/* Dashboard intro */
+#dashboard-intro h3 {
+  color: var(--docker-dark-gray);
+  font-weight: 600;
+}
+
+#dashboard-intro .text-danger {
+  color: var(--docker-blue) !important;
+}
+
+/* Notification badge */
+.notification-badge {
+  background-color: var(--docker-blue);
+  color: var(--docker-white);
+  font-size: 0.7rem;
+}
+
+/* Footer styling */
+footer {
+  font-size: 0.85rem;
+  color: var(--docker-light-text);
+  background-color: var(--docker-light-gray) !important; /* Ensure this takes precedence */
+}

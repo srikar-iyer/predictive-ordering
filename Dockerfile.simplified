@@ -1,0 +1,50 @@
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ build-essential curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first to leverage Docker cache
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -U pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Create necessary directories
+RUN mkdir -p /app/static/images /app/models /app/output /app/csv-data /app/test_output
+
+# Set proper permissions
+RUN chmod -R 777 /app/static /app/models /app/output /app/csv-data /app/test_output
+
+# Copy Python files
+COPY *.py /app/
+
+# Copy CSV data files
+COPY *.csv /app/csv-data/
+RUN for file in /app/csv-data/*.csv; do ln -sf "$file" /app/; done
+
+# Copy static files and models if they exist
+COPY static/ /app/static/ 
+COPY models/ /app/models/
+COPY test_output/ /app/test_output/
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8050
+ENV HOST=0.0.0.0
+
+# Make port 8050 available for Plotly Dash
+EXPOSE 8050
+
+# Healthcheck to verify the application is running
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=5 \
+  CMD curl -f http://localhost:8050/ || exit 1
+
+# Start the application using the main dashboard
+CMD ["python", "plotly_dashboard.py"]

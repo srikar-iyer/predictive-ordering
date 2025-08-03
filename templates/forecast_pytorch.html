@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block title %}PyTorch Forecast - Predictive Ordering System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">PyTorch Neural Network Sales Forecast</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Model Information</h5>
+                </div>
+                <div class="card-body">
+                    <p>The PyTorch neural network model uses advanced deep learning techniques for sales forecasting:</p>
+                    <ul>
+                        <li>LSTM (Long Short-Term Memory) architecture for temporal patterns</li>
+                        <li>Captures complex non-linear relationships in sales data</li>
+                        <li>Automatically learns hierarchical features from raw data</li>
+                        <li>Handles both short and long-term dependencies in time series</li>
+                        <li>Provides uncertainty estimates via Monte Carlo sampling</li>
+                    </ul>
+                    <p class="text-muted small">PyTorch models are particularly effective for complex time series with multiple underlying factors and patterns.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Forecast Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="forecast-form">
+                        <div class="mb-3">
+                            <label for="store-id" class="form-label">Store ID</label>
+                            <input type="text" class="form-control" id="store-id" value="104.0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-select" class="form-label">Product</label>
+                            <select class="form-select" id="product-select">
+                                <option value="3913116850.0" selected>BELLATORIA BBQ CHK PIZZA</option>
+                                <!-- More products will be populated dynamically -->
+                            </select>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="toggle-product-name" checked>
+                                <label class="form-check-label" for="toggle-product-name">Show Product Name</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-id" class="form-label">Product ID</label>
+                            <input type="text" class="form-control" id="product-id" value="3913116850.0" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date-preset" class="form-label">Date Range Preset</label>
+                            <select class="form-select" id="date-preset">
+                                <option value="full" selected>Full Range</option>
+                                <option value="last7">Last 7 Days</option>
+                                <option value="last30">Last 30 Days</option>
+                                <option value="last90">Last 90 Days</option>
+                                <option value="next7">Next 7 Days</option>
+                                <option value="next30">Next 30 Days</option>
+                                <option value="next90">Next 90 Days</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date-range" class="form-label">Custom Date Range</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="start-date">
+                                <span class="input-group-text">to</span>
+                                <input type="date" class="form-control" id="end-date">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Forecast</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">PyTorch Forecast Visualization</h5>
+                </div>
+                <div class="card-body">
+                    <div id="pytorch-forecast-chart" style="height: 600px; width: 100%; overflow-x: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/date-range-utility.js') }}"></script>
+<script>
+    // Function to load product options from API
+    function loadProductOptions() {
+        const storeId = document.getElementById('store-id').value;
+        fetch(`/api/product-dropdown-data?store_id=${storeId}`)
+            .then(response => response.json())
+            .then(data => {
+                const productSelect = document.getElementById('product-select');
+                // Clear existing options
+                productSelect.innerHTML = '';
+                
+                // Get product display mode
+                const showProductName = document.getElementById('toggle-product-name').checked;
+                
+                // Add new options
+                data.products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = showProductName ? 
+                        product.name : 
+                        product.id;
+                    option.dataset.name = product.name;
+                    option.dataset.id = product.id;
+                    productSelect.appendChild(option);
+                });
+                
+                // Update product ID field based on selection
+                if (data.products.length > 0) {
+                    document.getElementById('product-id').value = productSelect.value;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading product options:', error);
+            });
+    }
+
+    // Function to fetch and display PyTorch forecast
+    function loadPyTorchForecast() {
+        // Get form values
+        const storeId = document.getElementById('store-id').value;
+        const productId = document.getElementById('product-id').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        // Build query string
+        let queryParams = [];
+        if (storeId) queryParams.push(`store_id=${storeId}`);
+        if (productId) queryParams.push(`product_id=${productId}`);
+        if (startDate) queryParams.push(`start_date=${startDate}`);
+        if (endDate) queryParams.push(`end_date=${endDate}`);
+        const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+        
+        // Show loading indicator
+        document.getElementById('pytorch-forecast-chart').innerHTML = `
+            <div class="d-flex justify-content-center align-items-center h-100">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>`;
+            
+        // Fetch both PyTorch forecast data and historical sales data
+        Promise.all([
+            fetch(`/api/pytorch-forecast-data${queryString}`).then(response => response.json()),
+            fetch(`/api/historical-sales-data${queryString}`).then(response => response.json())
+        ])
+        .then(([pytorchData, salesData]) => {
+            const pytorchChart = JSON.parse(pytorchData);
+            const salesChart = JSON.parse(salesData);
+            
+            // Extract real sales data trace
+            let salesTrace = null;
+            if (salesChart && salesChart.data && salesChart.data.length > 0) {
+                salesTrace = salesChart.data[0];
+                salesTrace.name = 'Actual Sales';
+                salesTrace.marker.color = 'rgba(0, 0, 0, 0.8)';
+                salesTrace.marker.size = 6;
+            }
+            
+            // Combine the data
+            const combinedData = [];
+            
+            // Add sales data first if available
+            if (salesTrace) {
+                combinedData.push(salesTrace);
+            }
+            
+            // Add PyTorch forecast traces
+            pytorchChart.data.forEach(trace => {
+                combinedData.push(trace);
+            });
+            
+            // Update layout
+            const layout = pytorchChart.layout;
+            layout.width = null;  // Use container width
+            layout.autosize = true;
+            layout.margin = {l: 60, r: 30, b: 60, t: 80, pad: 4};
+            
+            // Render the combined chart
+            Plotly.newPlot('pytorch-forecast-chart', combinedData, layout);
+        })
+            .catch(error => {
+                console.error('Error loading forecast data:', error);
+                document.getElementById('pytorch-forecast-chart').innerHTML = 
+                    `<div class="alert alert-danger">Error loading forecast data: ${error.message}</div>`;
+            });
+    }
+    
+    // Load forecast on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load product options first
+        loadProductOptions();
+        
+        // Then load forecast
+        loadPyTorchForecast();
+        
+        // Handle form submission
+        document.getElementById('forecast-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            loadPyTorchForecast();
+        });
+        
+        // Handle product selection change
+        document.getElementById('product-select').addEventListener('change', function() {
+            document.getElementById('product-id').value = this.value;
+            loadPyTorchForecast();
+        });
+        
+        // Handle product name toggle
+        document.getElementById('toggle-product-name').addEventListener('change', function() {
+            // Reload product options with new display format
+            loadProductOptions();
+        });
+        
+        // Handle store ID change
+        document.getElementById('store-id').addEventListener('change', function() {
+            loadProductOptions();
+        });
+    });
+</script>
+{% endblock %}

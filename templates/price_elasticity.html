@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+
+{% block title %}Price Elasticity Analysis - Predictive Ordering System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Price Elasticity Analysis</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Price Elasticity Overview</h5>
+                </div>
+                <div class="card-body">
+                    <p>Price elasticity measures how responsive customer demand is to changes in price. Understanding this relationship helps optimize pricing strategies for maximum profit.</p>
+                    
+                    <h6>Key Insights:</h6>
+                    <ul>
+                        <li>Elastic products (elasticity < -1): Demand changes significantly with price changes</li>
+                        <li>Inelastic products (elasticity > -1): Demand changes less than proportionally to price changes</li>
+                        <li>Unit elasticity (elasticity = -1): Demand changes proportionally to price changes</li>
+                    </ul>
+                    
+                    <p class="text-muted small">The analysis uses historical sales data and price variations to calculate elasticity coefficients for each product.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Analysis Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="elasticity-form">
+                        <div class="mb-3">
+                            <label for="store-id" class="form-label">Store ID</label>
+                            <input type="text" class="form-control" id="store-id" value="104.0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-select" class="form-label">Product</label>
+                            <select class="form-select" id="product-select">
+                                <option value="3913116850.0" selected>BELLATORIA BBQ CHK PIZZA</option>
+                                <option value="3913116852.0">BELLATORIA ULT PEPPERONI PIZZA</option>
+                                <option value="3913116853.0">BELLATORIA ULT SUPREME PIZZA</option>
+                                <!-- More products will be loaded dynamically -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-id" class="form-label">Product ID</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="product-id" value="3913116850.0" readonly>
+                                <div class="form-check form-switch ms-2 d-flex align-items-center">
+                                    <input class="form-check-input" type="checkbox" id="toggle-product-name" checked>
+                                    <label class="form-check-label ms-2" for="toggle-product-name">Show Product Name</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date-preset" class="form-label">Analysis Period</label>
+                            <select class="form-select" id="date-preset">
+                                <option value="full" selected>Full Data Range</option>
+                                <option value="last30">Last 30 Days</option>
+                                <option value="last90">Last 90 Days</option>
+                                <option value="last180">Last 180 Days</option>
+                                <option value="last365">Last 365 Days</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date-range" class="form-label">Custom Date Range</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="start-date">
+                                <span class="input-group-text">to</span>
+                                <input type="date" class="form-control" id="end-date">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-info">Update Analysis</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Price Elasticity Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div id="elasticity-chart" style="height: 500px; width: 100%; overflow-x: auto;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Price Sensitivity Curve</h5>
+                </div>
+                <div class="card-body">
+                    <div id="sensitivity-chart" style="height: 500px; width: 100%; overflow-x: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Price Elasticity Details</h5>
+                </div>
+                <div class="card-body">
+                    <div id="elasticity-details">
+                        <div class="text-center p-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading elasticity data...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/date-range-utility.js') }}"></script>
+<script>
+    // Function to fetch and display elasticity distribution
+    function loadElasticityDistribution() {
+        fetch('/api/elasticity-data')
+            .then(response => response.json())
+            .then(data => {
+                const chartData = JSON.parse(data);
+                // Make chart wider
+                chartData.layout.width = null;
+                chartData.layout.autosize = true;
+                chartData.layout.margin = {l: 60, r: 30, b: 60, t: 80, pad: 4};
+                Plotly.newPlot('elasticity-chart', chartData.data, chartData.layout);
+            })
+            .catch(error => {
+                console.error('Error loading elasticity distribution:', error);
+                document.getElementById('elasticity-chart').innerHTML = 
+                    `<div class="alert alert-danger">Error loading elasticity distribution: ${error.message}</div>`;
+            });
+    }
+    
+    // Function to fetch and display price sensitivity curve
+    function loadPriceSensitivity() {
+        // Get form values
+        const storeId = document.getElementById('store-id').value;
+        const productId = document.getElementById('product-id').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        // Build query string
+        let queryParams = [];
+        if (storeId) queryParams.push(`store_id=${storeId}`);
+        if (productId) queryParams.push(`product_id=${productId}`);
+        if (startDate) queryParams.push(`start_date=${startDate}`);
+        if (endDate) queryParams.push(`end_date=${endDate}`);
+        const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+        
+        fetch(`/api/price-sensitivity${queryString}`)
+            .then(response => response.json())
+            .then(data => {
+                const chartData = JSON.parse(data);
+                // Make chart wider
+                chartData.layout.width = null;
+                chartData.layout.autosize = true;
+                chartData.layout.margin = {l: 60, r: 30, b: 60, t: 80, pad: 4};
+                Plotly.newPlot('sensitivity-chart', chartData.data, chartData.layout);
+            })
+            .catch(error => {
+                console.error('Error loading price sensitivity:', error);
+                document.getElementById('sensitivity-chart').innerHTML = 
+                    `<div class="alert alert-danger">Error loading price sensitivity: ${error.message}</div>`;
+            });
+    }
+    
+    // Function to load product options from API
+    function loadProductOptions() {
+        const storeId = document.getElementById('store-id').value;
+        fetch(`/api/product-dropdown-data?store_id=${storeId}`)
+            .then(response => response.json())
+            .then(data => {
+                const productSelect = document.getElementById('product-select');
+                // Clear existing options
+                productSelect.innerHTML = '';
+                
+                // Add new options
+                data.products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = product.name;
+                    productSelect.appendChild(option);
+                });
+                
+                // Update product ID field based on selection
+                if (data.products.length > 0) {
+                    document.getElementById('product-id').value = productSelect.value;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading product options:', error);
+                // Fallback to default product options
+            });
+    }
+    
+    // Function to fetch and display elasticity details
+    function loadElasticityDetails() {
+        // Get form values
+        const storeId = document.getElementById('store-id').value;
+        const productId = document.getElementById('product-id').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        const showProductName = document.getElementById('toggle-product-name').checked;
+        
+        // Date range text for display
+        let dateRangeText = 'All available data';
+        if (startDate && endDate) {
+            dateRangeText = `${startDate} to ${endDate}`;
+        }
+        
+        // For now, just create a sample details panel
+        // In a real implementation, you'd fetch this from an API endpoint
+        
+        const elasticityValue = -1.5 + Math.random() * 1.0; // Random elasticity between -1.5 and -0.5
+        const elasticityCategory = elasticityValue < -1 ? "Elastic" : "Inelastic";
+        const elasticityColor = elasticityValue < -1 ? "danger" : "success";
+        const currentPrice = 7.99;
+        const optimalPrice = currentPrice * (1 + (0.1 * Math.random() * (elasticityValue < -1 ? -1 : 1)));
+        const marginImpact = Math.abs((optimalPrice - currentPrice) / currentPrice * 100 * (elasticityValue / -1));
+        
+        const detailsHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table">
+                        <tr>
+                            <th>${showProductName ? 'Product Name' : 'Product ID'}</th>
+                            <td>${showProductName ? document.getElementById('product-select').options[document.getElementById('product-select').selectedIndex].text : productId}</td>
+                        </tr>
+                        <tr>
+                            <th>Store ID</th>
+                            <td>${storeId}</td>
+                        </tr>
+                        <tr>
+                            <th>Analysis Period</th>
+                            <td>${dateRangeText}</td>
+                        </tr>
+                        <tr>
+                            <th>Elasticity Coefficient</th>
+                            <td><span class="badge bg-${elasticityColor}">${elasticityValue.toFixed(2)}</span></td>
+                        </tr>
+                        <tr>
+                            <th>Classification</th>
+                            <td>${elasticityCategory}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table">
+                        <tr>
+                            <th>Current Price</th>
+                            <td>$${currentPrice.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <th>Optimal Price</th>
+                            <td>$${optimalPrice.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <th>Suggested Change</th>
+                            <td>${((optimalPrice - currentPrice) / currentPrice * 100).toFixed(1)}%</td>
+                        </tr>
+                        <tr>
+                            <th>Margin Impact</th>
+                            <td>+${marginImpact.toFixed(1)}%</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <strong>Recommendation:</strong> 
+                        ${elasticityValue < -1 
+                            ? `This product is <strong>elastic</strong>. Consider reducing the price to increase total revenue and profit.` 
+                            : `This product is <strong>inelastic</strong>. Consider a price increase to maximize margins while minimizing sales impact.`
+                        }
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('elasticity-details').innerHTML = detailsHTML;
+    }
+    
+    // Load all data on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date pickers using the utility
+        initDateRangePickers();
+        
+        // Load product options
+        loadProductOptions();
+        
+        loadElasticityDistribution();
+        loadPriceSensitivity();
+        loadElasticityDetails();
+        
+        // Handle form submission
+        document.getElementById('elasticity-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            loadPriceSensitivity();
+            loadElasticityDetails();
+        });
+        
+        // Handle product selection change
+        document.getElementById('product-select').addEventListener('change', function() {
+            document.getElementById('product-id').value = this.value;
+            loadPriceSensitivity();
+            loadElasticityDetails();
+        });
+        
+        // Handle product name toggle
+        document.getElementById('toggle-product-name').addEventListener('change', function() {
+            loadElasticityDetails();
+        });
+        
+        // Handle store change - load product options for that store
+        document.getElementById('store-id').addEventListener('change', function() {
+            loadProductOptions();
+        });
+        
+        // Handle date preset changes
+        document.getElementById('date-preset').addEventListener('change', function() {
+            setTimeout(() => {
+                loadPriceSensitivity();
+                loadElasticityDetails();
+            }, 100);
+        });
+        
+        // Handle date range changes
+        document.getElementById('start-date').addEventListener('change', function() {
+            loadPriceSensitivity();
+            loadElasticityDetails();
+        });
+        
+        document.getElementById('end-date').addEventListener('change', function() {
+            loadPriceSensitivity();
+            loadElasticityDetails();
+        });
+    });
+</script>
+{% endblock %}

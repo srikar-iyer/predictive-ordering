@@ -1,0 +1,241 @@
+Store_Id,Item,Current_Stock,Avg_Daily_Demand,Weeks_Of_Stock,Target_Stock_Weeks,Min_Stock_Weeks,Target_Stock_Units,Recommended_Order_Quantity,Product,Size,Stock_Status,Recommendation_Reason,Unit_Profit,Profit_Impact
+1,1,195,14.966666666666667,1.8612790327712376,2,1,209.53333333333333,0,Cheese Pizza,Small,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",2.49816047538945,0.0
+1,2,233,17.0,1.9579831932773109,2,1,238.0,0,Pepperoni Pizza,Medium,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",4.802857225639665,0.0
+1,3,273,24.0,1.625,2,1,336.0,0,Supreme Pizza,Large,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",3.9279757672456204,0.0
+1,4,302,31.1,1.3872301332108405,2,1,435.40000000000003,0,Veggie Pizza,X-Large,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",3.3946339367881464,0.0
+1,5,337,39.266666666666666,1.2260489934513703,2,1,549.7333333333333,0,Hawaiian Pizza,Small,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",1.624074561769746,0.0
+2,1,216,23.1,1.3358070500927643,2,1,323.40000000000003,0,Cheese Pizza,Small,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",1.6239780813448106,0.0
+2,2,255,32.46666666666667,1.1220299207978879,2,1,454.53333333333336,0,Pepperoni Pizza,Medium,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",1.2323344486727978,0.0
+2,3,292,28.866666666666667,1.4450676344440778,2,1,404.1333333333333,0,Supreme Pizza,Large,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",4.46470458309974,0.0
+2,4,334,31.733333333333334,1.5036014405762306,2,1,444.26666666666665,0,Veggie Pizza,X-Large,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",3.404460046972835,0.0
+2,5,373,36.43333333333333,1.4625539145209778,2,1,510.0666666666666,0,Hawaiian Pizza,Small,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",3.832290311184182,0.0
+3,1,243,25.7,1.3507504168982767,2,1,359.8,0,Cheese Pizza,Small,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",1.0823379771832098,0.0
+3,2,274,39.733333333333334,0.9851390220517737,2,1,556.2666666666667,282,Pepperoni Pizza,Medium,Low,"Low stock - less than 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 week of inventory",4.879639408647977,1376.0583132387294
+3,3,327,33.46666666666667,1.3958451906659077,2,1,468.53333333333336,0,Supreme Pizza,Large,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",4.329770563201687,0.0
+3,4,355,30.7,1.6519311307584923,2,1,429.8,0,Veggie Pizza,X-Large,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",1.8493564427131046,0.0
+3,5,394,28.866666666666667,1.9498515341471463,2,1,404.1333333333333,0,Hawaiian Pizza,Small,Adequate,"Adequate stock - between 0     1
+1     1
+2     1
+3     1
+4     1
+5     1
+6     1
+7     1
+8     1
+9     1
+10    1
+11    1
+12    1
+13    1
+14    1
+Name: Min_Stock_Weeks, dtype: int64 and 3 weeks of inventory",1.7272998688284025,0.0

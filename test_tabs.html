@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tab Test</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+    <link rel="stylesheet" href="assets/custom.css">
+    <link rel="stylesheet" href="assets/docker-hub-theme.css">
+    <link rel="stylesheet" href="assets/responsive.css">
+    <style>
+        body { padding: 20px; }
+        .test-container { max-width: 800px; margin: 0 auto; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h3>Tab Test Page</h3>
+        <p>Testing the tab styling with icons for the Pizza Predictive Ordering dashboard.</p>
+        
+        <div class="card">
+            <div class="card-body">
+                <ul class="nav nav-tabs docker-tabs mb-3" id="test-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="tab1-tab" data-toggle="tab" href="#tab1" role="tab">
+                            <i class="fas fa-chart-line mr-2"></i>Sales Forecast
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab2-tab" data-toggle="tab" href="#tab2" role="tab">
+                            <i class="fas fa-boxes mr-2"></i>Inventory Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab3-tab" data-toggle="tab" href="#tab3" role="tab">
+                            <i class="fas fa-tags mr-2"></i>Price Optimization
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab4-tab" data-toggle="tab" href="#tab4" role="tab">
+                            <i class="fas fa-project-diagram mr-2"></i>Integrated View
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab5-tab" data-toggle="tab" href="#tab5" role="tab">
+                            <i class="fas fa-chart-bar mr-2"></i>Item Statistics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab6-tab" data-toggle="tab" href="#tab6" role="tab">
+                            <i class="fas fa-cog mr-2"></i>Settings
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="tabContent">
+                    <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+                        <h4>Sales Forecast Content</h4>
+                        <p>This is the content for the Sales Forecast tab.</p>
+                    </div>
+                    <div class="tab-pane fade" id="tab2" role="tabpanel">
+                        <h4>Inventory Management Content</h4>
+                        <p>This is the content for the Inventory Management tab.</p>
+                    </div>
+                    <div class="tab-pane fade" id="tab3" role="tabpanel">
+                        <h4>Price Optimization Content</h4>
+                        <p>This is the content for the Price Optimization tab.</p>
+                    </div>
+                    <div class="tab-pane fade" id="tab4" role="tabpanel">
+                        <h4>Integrated View Content</h4>
+                        <p>This is the content for the Integrated View tab.</p>
+                    </div>
+                    <div class="tab-pane fade" id="tab5" role="tabpanel">
+                        <h4>Item Statistics Content</h4>
+                        <p>This is the content for the Item Statistics tab.</p>
+                    </div>
+                    <div class="tab-pane fade" id="tab6" role="tabpanel">
+                        <h4>Settings Content</h4>
+                        <p>This is the content for the Settings tab.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

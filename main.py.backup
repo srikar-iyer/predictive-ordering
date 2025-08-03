@@ -1,0 +1,159 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import subprocess
+import time
+import pandas as pd
+from datetime import datetime
+
+def run_command(command, description):
+    """Run a shell command with error handling and timing"""
+    print(f"\n{'='*80}")
+    print(f"RUNNING: {description}")
+    print(f"{'='*80}")
+    
+    start_time = time.time()
+    try:
+        result = subprocess.run(command, shell=True, check=True, text=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        print(result.stdout)
+        if result.stderr:
+            print(f"STDERR: {result.stderr}")
+        
+        elapsed_time = time.time() - start_time
+        print(f"COMPLETED in {elapsed_time:.2f} seconds: {description}")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"ERROR: {e}")
+        print(f"STDOUT: {e.stdout}")
+        print(f"STDERR: {e.stderr}")
+        
+        elapsed_time = time.time() - start_time
+        print(f"FAILED in {elapsed_time:.2f} seconds: {description}")
+        return False
+
+def verify_data_files():
+    """Verify that necessary data files exist"""
+    required_files = [
+        "FrozenPizzaSales.csv",
+        "FrozenPizzaPurchases.csv",
+        "FrozenPizzaStock.csv"
+    ]
+    
+    missing_files = []
+    
+    for file in required_files:
+        if not os.path.isfile(file):
+            missing_files.append(file)
+    
+    if missing_files:
+        print(f"ERROR: The following required data files are missing: {', '.join(missing_files)}")
+        return False
+    
+    print(f"All required data files found.")
+    return True
+
+def create_directories():
+    """Create necessary directories for outputs"""
+    dirs = [
+        "static",
+        "static/images",
+        "static/images/inventory",
+        "static/images/profit",
+        "static/images/time_series",
+        "models",
+        "models/time_series"
+    ]
+    
+    for d in dirs:
+        os.makedirs(d, exist_ok=True)
+    
+    print(f"Created output directories.")
+    return True
+
+def run_full_pipeline(skip_time_series=False, use_existing_rf=False):
+    """Run the full predictive ordering pipeline
+    
+    Args:
+        skip_time_series (bool): Skip the PyTorch time series model training
+        use_existing_rf (bool): Use existing Random Forest model instead of retraining
+    """
+    pipeline_start = time.time()
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    print(f"\n{'*'*80}")
+    print(f"STARTING PIZZA PREDICTIVE ORDERING PIPELINE - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{'*'*80}")
+    
+    # Verify data files
+    if not verify_data_files():
+        return False
+    
+    # Create directories
+    create_directories()
+    
+    # Step 1: Integrate the datasets
+    if not run_command("python3 integrate_pizza_data.py", "Data Integration"):
+        print("ERROR: Data integration failed. Exiting pipeline.")
+        return False
+        
+    # Step 1b: Market basket analysis has been removed
+    print("Market Basket Analysis component has been removed from the pipeline.")
+    
+    # Step 2: Train the Random Forest model (with option to use existing model)
+    rf_cmd = "python3 rf_model_update.py"
+    if use_existing_rf:
+        rf_cmd += " --use-existing"
+    if not run_command(rf_cmd, "Random Forest Model Processing"):
+        print("WARNING: Random Forest model processing failed. Continuing pipeline.")
+    
+    # Step 3: Train the PyTorch time series model (optional)
+    if not skip_time_series:
+        if not run_command("python3 pytorch_time_series.py", "PyTorch Time Series Model Training"):
+            print("WARNING: PyTorch time series model training failed. Continuing pipeline.")
+    else:
+        print("\nSkipping PyTorch time series model training.")
+        # Create a fallback PyTorch forecasts file from RF forecasts to avoid errors
+        if os.path.exists("rf_forecasts.csv") and not os.path.exists("pytorch_forecasts.csv"):
+            print("Creating PyTorch forecasts file from Random Forest forecasts as a fallback")
+            import shutil
+            shutil.copy("rf_forecasts.csv", "pytorch_forecasts.csv")
+    
+    # Step 4: Inventory management has been removed
+    print("Inventory management component has been removed from the pipeline.")
+    
+    # Step 5: Run profit optimization
+    if not run_command("python3 profit_optimization.py", "Profit Optimization"):
+        print("WARNING: Profit optimization failed. Continuing pipeline.")
+    
+    # Step 6: Launch the dashboard
+    dashboard_cmd = "python3 plotly_dashboard.py"
+    print(f"\n{'='*80}")
+    print(f"LAUNCHING DASHBOARD: {dashboard_cmd}")
+    print(f"{'='*80}")
+    print("Dashboard will be available at: http://localhost:8050")
+    
+    # Calculate total runtime
+    total_runtime = time.time() - pipeline_start
+    print(f"\n{'*'*80}")
+    print(f"PIPELINE COMPLETED in {total_runtime:.2f} seconds")
+    print(f"{'*'*80}")
+    
+    # Launch the dashboard (this will block the script until the dashboard is closed)
+    return subprocess.run(dashboard_cmd, shell=True)
+
+def main():
+    """Parse arguments and run the pipeline"""
+    parser = argparse.ArgumentParser(description='Pizza Predictive Ordering Pipeline')
+    parser.add_argument('--skip-time-series', action='store_true', 
+                        help='Skip the PyTorch time series model training (faster execution)')
+    parser.add_argument('--use-existing-rf', action='store_true',
+                        help='Use existing Random Forest model instead of retraining')
+    
+    args = parser.parse_args()
+    
+    run_full_pipeline(skip_time_series=args.skip_time_series, use_existing_rf=args.use_existing_rf)
+
+if __name__ == "__main__":
+    main()

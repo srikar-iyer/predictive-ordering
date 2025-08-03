@@ -1,0 +1,62 @@
+Store_Id,Item,Product,Size,Current_Stock,Avg_Weekly_Demand,Weeks_Of_Supply,Stock_Status,Order_Quantity,Recommendation_Reason
+104.0,3913116850.0,BELLATORIA BBQ CHK PIZZA,15.51 OZ,0,1.9424617625637288,0.0,Low,2,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,3913116852.0,BELLATORIA ULT PEPPERONI PIZZA,17.31 OZ,0,5.697378004369993,0.0,Low,6,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,3913116853.0,BELLATORIA ULT SUPREME PIZZA,21.71 OZ,0,9.444646758922067,0.0,Low,9,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,3913116856.0,BELLATORIA GAR CHKN ALFR PIZZA,16.03 OZ,0,11.336125273124544,0.0,Low,11,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,3913116891.0,BELLATORIA SAUS ITALIA PIZZA,18.27 OZ,0,7.328841951930079,0.0,Low,7,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,3913116957.0,BELLATORIA HAWAIIAN BBQ PIZZA,16.35 OZ,0,3.6988346686088858,0.0,Low,4,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4219700201.0,BREW PUB PEPPERONI PIZZA,23.25 OZ,0,4.333576110706483,0.0,Low,4,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4219700203.0,BREW PUB SAUS PEP PIZZA,26.45 OZ,0,3.517844136926439,0.0,Low,4,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4219700204.0,BREW PUB CHEESE PIZZA,22.75 OZ,0,2.373270211216315,0.0,Low,2,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4219700205.0,BREW PUB 4 MEAT PIZZA,28.25 OZ,0,6.0568099053168245,0.0,Low,6,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4219700206.0,BREW PUB BACON CHSBRGR PIZZA,25.25 OZ,0,3.5433357611070644,0.0,Low,4,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4219700207.0,BREW PUB SUPREME PIZZA,30.75 OZ,0,4.318281136198106,0.0,Low,4,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4219700334.0,BREW PUB TACO GRANDE,23.89 OZ,0,0.2090313182811362,0.0,Low,0,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4280010700.0,TOTINO SUPREME PIZZA,10.9 OZ,0,41.45957756737072,0.0,Low,41,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4280010800.0,TOTINO 3 MEAT PIZZA,10.5 OZ,0,63.005098324836126,0.0,Low,63,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4280011100.0,TOTINO SAUSAGE PIZZA,10.8 OZ,0,30.91114348142753,0.0,Low,31,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4280011200.0,TOTINO HAMBRGR PIZZA,10.9 OZ,0,40.14930808448652,0.0,Low,40,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4280011300.0,TOTINO CHEESE PIZZA,9.8 OZ,0,35.22177713037145,0.0,Low,35,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4280011400.0,TOTINO PEPPERONI PIZZA,10.2 OZ,0,101.84413692643845,0.0,Low,102,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4280011520.0,TOTINO 3 CHEESE PIZZA,9.8 OZ,0,49.415513474144205,0.0,Low,49,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4280011600.0,TOTINO COMBINATION PIZZA,10.7 OZ,0,52.46431172614712,0.0,Low,52,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,4786100005.0,IMOS PEPPERONI PIZZA,17.3 OZ,0,2.3248361252731247,0.0,Low,2,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7192114978.0,DIGIORNO HAND TOSSED SUPREME,18.9 OZ,0,0.8743627093954843,0.0,Low,1,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7192119954.0,TOMBSTONE SUPREME PIZZA,20.8 OZ,0,5.335396941005098,0.0,Low,5,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7192156420.0,TOMBSTONE 4 MEAT PIZZA,21.1 OZ,0,7.902403495994173,0.0,Low,8,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7192182379.0,DIGIORNO RC PEPPERONI PIZZA,24.7 OZ.,0,1.1063364894391843,0.0,Low,1,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7192190926.0,DIGIORNO ULTRA THIN CARNIVR PIZA,15.00 OZ,0,1.4453750910415148,0.0,Low,1,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7192197185.0,TOMBSTONE PEPPERONI PIZZA,19.3 OZ,0,10.273124544792426,0.0,Low,10,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218056624.0,RED BARON 4 MEAT PIZZA,21.95 OZ,0,25.907137654770573,0.0,Low,26,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218056632.0,RED BARON DEEP DISH MEAT TRIO,11.2 OZ,0,3.8288419519300803,0.0,Low,4,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218056638.0,RED BARON DEEP DISH CHEESE,11.2 OZ,0,6.691551347414421,0.0,Low,7,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063187.0,RED BARON D/D/ BACON SCRAMBLE,11.72 OZ.,0,5.264020393299345,0.0,Low,5,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063193.0,RED BARON D/D/ SAUSAGE SCRAMBLE,11.72 OZ.,0,5.371085214857975,0.0,Low,5,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063243.0,RED BARON FH BD 3 MEAT,11 OZ,0,8.200655498907501,0.0,Low,8,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063244.0,RED BARON FH PEPPERONI,10.8 OZ,0,12.753459577567371,0.0,Low,13,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063245.0,RED BARON FH 5 CHEESE & GARLIC,8.8 OZ,0,9.02913328477786,0.0,Low,9,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063247.0,RED BARON FH SUPREME,11.6 OZ,0,6.4595775673707205,0.0,Low,6,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063429.0,RED BARON 4 CHEESE PIZZA,21.06 OZ,0,28.6959213401311,0.0,Low,29,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063469.0,RED BARON DELUXE PIZZA,22.95 OZ,0,15.751274581209032,0.0,Low,16,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063471.0,RED BARON SUPREME PIZZA,23.45 OZ,0,18.269847050254917,0.0,Low,18,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063473.0,RED BARON PEPPERONI PIZZA,20.6 OZ,0,42.36707938820102,0.0,Low,42,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063717.0,TONYS PS PEPPERONI,18.56 OZ,0,30.567006554989078,0.0,Low,31,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063718.0,TONYS PS CHEESE,18.9 OZ.,0,18.06846321922797,0.0,Low,18,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063735.0,TONYS PS MEAT TRIO,20.13 OZ,0,19.837581937363435,0.0,Low,20,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063736.0,TONYS PS SUPREME,20.6 OZ,0,10.01820830298616,0.0,Low,10,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063810.0,RED BARON BO CHEESE TRIO,17.82 OZ,0,11.764384559359069,0.0,Low,12,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218063811.0,RED BARON BO PEPPERONI,17.89 OZ,0,24.907865986890023,0.0,Low,25,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218073366.0,RED BARON D/D PEPPERONI PIZZA,11.2 OZ,0,12.582665695557173,0.0,Low,13,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7218073367.0,RED BARON D/D/ SUPREME PIZZA,11.5 OZ.,0,6.936270939548434,0.0,Low,7,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7465330890.0,JACKS CHEESE PIZZA,13.8 OZ.,0,18.254552075746542,0.0,Low,18,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7465379187.0,JACKS PEPPERONI PIZZA,14.3 OZ,0,50.39949016751638,0.0,Low,50,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7570612755.0,PALERMOS THIN CRUST CHEESE,14.5 OZ,0,10.844136926438457,0.0,Low,11,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7570612756.0,PALERMOS THIN CRUST PEPPERONI,15.4 OZ,0,19.495994173343043,0.0,Low,19,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7570612758.0,PALERMOS THIN CRUST COMBO,16.3 OZ,0,13.143481427530954,0.0,Low,13,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7570615101.0,SCM SICILIAN HOLY PEPPERONI,22.3 OZ,0,6.864894391842681,0.0,Low,7,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7570615103.0,SCM SICILIAN SUPREMUS MAXIUMS,25 OZ,0,6.96176256372906,0.0,Low,7,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7570615108.0,SCM SICILIAN MOTHER OF MEAT,24.7 OZ,0,9.261107064821559,0.0,Low,9,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7570630318.0,SCM SICILIAN THIN CRST PEPPERONI,23.7 OZ,0,3.4617625637290605,0.0,Low,3,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7570630320.0,SCM SICILIAN THIN CRST SUPREME,26.1 OZ,0,2.6766205389657687,0.0,Low,3,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7570630570.0,SCM SICILIAN TC SAUS/PEP,18.75 OZ,0,1.7436270939548433,0.0,Low,2,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.
+104.0,7570630848.0,SCM SICILIAN BBQ CHICKEN,17.7 OZ,0,0.5251274581209031,0.0,Low,1,Low stock (0.0 weeks). Ordering to reach target of 1 weeks.

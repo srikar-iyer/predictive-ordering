@@ -1,0 +1,393 @@
+/* 
+   Pizza Predictive Ordering System - Custom Dashboard Styling
+   A modern, clean design with consistent color themes and improved UI elements
+*/
+
+/* === Global Styling === */
+:root {
+  --primary-color: #2c3e50;
+  --secondary-color: #e74c3c;
+  --accent-color: #3498db;
+  --light-accent: #ecf0f1;
+  --success-color: #2ecc71;
+  --warning-color: #f39c12;
+  --danger-color: #c0392b;
+  --text-color: #333;
+  --light-text: #f8f9fa;
+  --border-radius: 6px;
+  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+body {
+  background-color: #f5f7fa;
+  color: var(--text-color);
+  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+/* === Header and Navigation === */
+.navbar {
+  box-shadow: var(--box-shadow);
+  padding: 0.75rem 1rem;
+}
+
+.navbar-brand {
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--light-text) !important;
+}
+
+.navbar-dark {
+  background: linear-gradient(135deg, var(--primary-color), #1a252f) !important;
+}
+
+.navbar-brand i {
+  color: var(--secondary-color);
+  margin-right: 0.5rem;
+}
+
+/* === Tabs Styling === */
+.nav-tabs {
+  border-bottom: 1px solid #dee2e6;
+  margin-bottom: 1rem;
+}
+
+.nav-tabs .nav-item {
+  margin-bottom: -1px;
+}
+
+.nav-tabs .nav-link {
+  border: 1px solid transparent;
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+  color: var(--primary-color);
+  font-weight: 500;
+  padding: 0.75rem 1.25rem;
+  transition: var(--transition);
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: #e9ecef #e9ecef #dee2e6;
+  color: var(--secondary-color);
+}
+
+.nav-tabs .nav-link.active {
+  border-color: #dee2e6 #dee2e6 #fff;
+  border-bottom: 3px solid var(--secondary-color);
+  color: var(--secondary-color);
+  font-weight: 600;
+}
+
+/* Tab hover effect */
+.nav-tabs .nav-link:before {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 3px;
+  bottom: -1px;
+  left: 0;
+  background-color: var(--secondary-color);
+  visibility: hidden;
+  transition: all 0.3s ease-in-out;
+}
+
+.nav-tabs .nav-link:hover:before {
+  visibility: visible;
+  width: 100%;
+}
+
+.nav-tabs .nav-link.active:before {
+  visibility: visible;
+  width: 100%;
+}
+
+/* Tab icon styling */
+.nav-tabs .nav-link i {
+  margin-right: 0.5rem;
+}
+
+/* Docker tabs - ensure icons and text display properly */
+.docker-tabs .nav-link i {
+  margin-right: 0.5rem;
+  display: inline-block;
+}
+
+/* === Cards and Containers === */
+.container-fluid {
+  padding: 1.5rem;
+}
+
+.card {
+  border-radius: var(--border-radius);
+  border: none;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.card:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  background-color: #fff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  font-weight: 600;
+  padding: 1rem 1.25rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* === Form Elements === */
+.form-control, .form-select {
+  border-radius: var(--border-radius);
+  border: 1px solid #ced4da;
+  font-size: 0.95rem;
+  padding: 0.5rem 0.75rem;
+  transition: var(--transition);
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+
+/* === Dropdowns === */
+.Select-control {
+  border-radius: var(--border-radius);
+  border: 1px solid #ced4da;
+}
+
+.Select.is-focused:not(.is-open) > .Select-control {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.Select-menu-outer {
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  border: 1px solid #ced4da;
+  box-shadow: var(--box-shadow);
+}
+
+/* Dropdown items */
+.Select-option {
+  padding: 0.5rem 1rem;
+}
+
+.Select-option.is-focused {
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+.Select-option.is-selected {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+/* === Buttons === */
+.btn {
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  text-transform: none;
+  transition: var(--transition);
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #2980b9;
+  border-color: #2980b9;
+}
+
+.btn-secondary {
+  background-color: #95a5a6;
+  border-color: #95a5a6;
+}
+
+.btn-success {
+  background-color: var(--success-color);
+  border-color: var(--success-color);
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+.btn-warning {
+  background-color: var(--warning-color);
+  border-color: var(--warning-color);
+}
+
+/* === Toggle Switches === */
+.custom-switch .custom-control-input:checked ~ .custom-control-label::before {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* === Alerts === */
+.alert {
+  border-radius: var(--border-radius);
+  border: none;
+  box-shadow: var(--box-shadow);
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+/* === Data Tables === */
+.dash-table-container {
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--box-shadow);
+}
+
+.dash-table-container .dash-spreadsheet-container {
+  font-size: 0.9rem;
+}
+
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner th {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.75rem;
+}
+
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td {
+  padding: 0.75rem;
+}
+
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner tr:nth-of-type(even) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* === Charts and Graphs - Core Styles === */
+.js-plotly-plot .plotly {
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  background-color: white;
+}
+
+/* Chart containers - replacing inline styles */
+.chart-container {
+  height: 50vh;
+}
+
+.chart-container-medium {
+  height: 40vh;
+}
+
+.chart-container-small {
+  height: 30vh;
+}
+
+/* Text color utility classes for icons */
+.text-purple {
+  color: #9b59b6;
+}
+
+.text-success {
+  color: var(--success-color);
+}
+
+/* Add cursor pointer utility */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Interactive chart styling moved to interactive.css */
+
+/* === Loading Animation === */
+.dash-loading-callback {
+  border-radius: var(--border-radius);
+}
+
+/* === Custom Metrics Cards === */
+.metric-card {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  margin-bottom: 1rem;
+  padding: 1.25rem;
+  position: relative;
+  transition: var(--transition);
+}
+
+.metric-card:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.metric-card .title {
+  color: var(--primary-color);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+.metric-card .value {
+  color: var(--secondary-color);
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.metric-card .description {
+  color: #95a5a6;
+  font-size: 0.875rem;
+}
+
+.metric-card .icon {
+  color: rgba(52, 152, 219, 0.2);
+  font-size: 2.5rem;
+  position: absolute;
+  right: 1.25rem;
+  top: 1.25rem;
+}
+
+/* === Date Picker - Core Styles === */
+.DateRangePickerInput {
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: var(--border-radius);
+}
+
+.DateRangePickerInput_arrow {
+  color: var(--primary-color);
+}
+
+/* Additional DatePicker styles moved to responsive.css */
+
+/* === Responsive Design === */
+/* Moved to responsive.css */

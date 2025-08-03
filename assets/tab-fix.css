@@ -1,0 +1,62 @@
+/* 
+   Tab icon styling for the Pizza Predictive Ordering Dashboard
+   This file provides critical styling for tab visibility and structure
+*/
+
+/* Ensure icons display properly in tabs */
+.nav-tabs .nav-link i,
+#main-tabs .nav-link i,
+.docker-tabs .nav-link i {
+  display: inline-block !important;
+  margin-right: 0.5rem !important;
+}
+
+/* Basic spacing for tab content */
+.tab-content {
+  width: 100% !important;
+  display: block !important;
+}
+
+/* Fix for tab display issues */
+.nav-tabs .nav-item,
+#main-tabs .nav-item,
+.docker-tabs .nav-item {
+  display: block !important;
+}
+
+.nav-tabs .nav-link,
+#main-tabs .nav-link,
+.docker-tabs .nav-link {
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Fix for tab panes */
+.tab-pane {
+  width: 100% !important;
+}
+
+.tab-pane.active {
+  display: block !important;
+}
+
+/* Ensure tab container is visible */
+.nav-tabs, 
+#main-tabs, 
+.docker-tabs {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  width: 100% !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Force tab active state visibility */
+.nav-link.active,
+.nav-item.active > .nav-link {
+  background-color: #fff !important;
+  color: #0db7ed !important;
+  border-color: #dee2e6 #dee2e6 #fff !important;
+  border-bottom: 3px solid #e74c3c !important;
+  font-weight: 600 !important;
+}

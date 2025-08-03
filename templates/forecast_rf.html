@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+
+{% block title %}Random Forest Forecast - Predictive Ordering System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Random Forest Sales Forecast</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Model Information</h5>
+                </div>
+                <div class="card-body">
+                    <p>The Random Forest model uses an ensemble of decision trees to create accurate sales forecasts with the following features:</p>
+                    <ul>
+                        <li>Multiple feature inputs (price, promotions, seasonality, etc.)</li>
+                        <li>Robust to outliers and missing data</li>
+                        <li>Automatically handles non-linear relationships</li>
+                        <li>Provides feature importance insights</li>
+                    </ul>
+                    <p class="text-muted small">Random Forest forecasts typically excel at short to medium-term predictions with complex feature interactions.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Forecast Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="forecast-form">
+                        <div class="mb-3">
+                            <label for="store-id" class="form-label">Store ID</label>
+                            <input type="text" class="form-control" id="store-id" value="104.0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-select" class="form-label">Product</label>
+                            <select class="form-select" id="product-select">
+                                <option value="3913116850.0" selected>BELLATORIA BBQ CHK PIZZA</option>
+                                <!-- More products will be populated dynamically -->
+                            </select>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="toggle-product-name" checked>
+                                <label class="form-check-label" for="toggle-product-name">Show Product Name</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-id" class="form-label">Product ID</label>
+                            <input type="text" class="form-control" id="product-id" value="3913116850.0" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date-preset" class="form-label">Date Range Preset</label>
+                            <select class="form-select" id="date-preset">
+                                <option value="last14" selected>Last 2 Weeks</option>
+                                <option value="last7">Last 7 Days</option>
+                                <option value="last30">Last 30 Days</option>
+                                <option value="last90">Last 90 Days</option>
+                                <option value="next7">Next 7 Days</option>
+                                <option value="next14">Next 2 Weeks</option>
+                                <option value="next30">Next 30 Days</option>
+                                <option value="full">Full Range</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date-range" class="form-label">Custom Date Range</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="start-date">
+                                <span class="input-group-text">to</span>
+                                <input type="date" class="form-control" id="end-date">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success">Update Forecast</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Random Forest Forecast Visualization</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div class="form-check form-switch d-inline-block me-3">
+                                <input class="form-check-input" type="checkbox" id="toggle-confidence" checked>
+                                <label class="form-check-label" for="toggle-confidence">Show Confidence Intervals</label>
+                            </div>
+                            <div class="form-check form-switch d-inline-block me-3">
+                                <input class="form-check-input" type="checkbox" id="toggle-historical" checked>
+                                <label class="form-check-label" for="toggle-historical">Show Historical Data</label>
+                            </div>
+                            <div class="form-check form-switch d-inline-block">
+                                <input class="form-check-input" type="checkbox" id="toggle-trend">
+                                <label class="form-check-label" for="toggle-trend">Show Trend Line</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="clearfix">
+                        <div class="border border-success rounded px-2 py-1 mb-2 float-end">
+                            <span class="badge bg-success me-1">●</span><span class="small">Random Forest forecast with historical data</span>
+                        </div>
+                    </div>
+                    <div id="rf-forecast-chart" style="height: 600px; width: 100%; overflow-x: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/date-range-utility.js') }}"></script>
+<script>
+    // Function to load product options from API
+    function loadProductOptions() {
+        const storeId = document.getElementById('store-id').value;
+        fetch(`/api/product-dropdown-data?store_id=${storeId}`)
+            .then(response => response.json())
+            .then(data => {
+                const productSelect = document.getElementById('product-select');
+                // Clear existing options
+                productSelect.innerHTML = '';
+                
+                // Get product display mode
+                const showProductName = document.getElementById('toggle-product-name').checked;
+                
+                // Add new options
+                data.products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = showProductName ? 
+                        product.name : 
+                        product.id;
+                    option.dataset.name = product.name;
+                    option.dataset.id = product.id;
+                    productSelect.appendChild(option);
+                });
+                
+                // Update product ID field based on selection
+                if (data.products.length > 0) {
+                    document.getElementById('product-id').value = productSelect.value;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading product options:', error);
+            });
+    }
+    
+    // Function to fetch and display RF forecast
+    function loadRFForecast() {
+        // Get form values
+        const storeId = document.getElementById('store-id').value;
+        const productId = document.getElementById('product-id').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        // Build query string
+        let queryParams = [];
+        if (storeId) queryParams.push(`store_id=${storeId}`);
+        if (productId) queryParams.push(`product_id=${productId}`);
+        if (startDate) queryParams.push(`start_date=${startDate}`);
+        if (endDate) queryParams.push(`end_date=${endDate}`);
+        const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+        
+        // Show loading indicator
+        document.getElementById('rf-forecast-chart').innerHTML = `
+            <div class="d-flex justify-content-center align-items-center h-100">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>`;
+            
+        // Fetch both RF forecast data and historical sales data
+        Promise.all([
+            fetch(`/api/rf-forecast-data${queryString}`).then(response => response.json()),
+            fetch(`/api/forecast-data${queryString}&forecast_model=rf`).then(response => response.json()),
+            fetch(`/api/historical-sales-data${queryString}`).then(response => response.json())
+        ])
+        .then(([rfData, historyData, salesData]) => {
+            const rfChart = JSON.parse(rfData);
+            const historyChart = JSON.parse(historyData);
+            const realSalesChart = JSON.parse(salesData);
+            
+            // Extract historical data trace
+            let historicalTrace = null;
+            for (let i = 0; i < historyChart.data.length; i++) {
+                if (historyChart.data[i].name === "Historical Sales") {
+                    historicalTrace = historyChart.data[i];
+                    break;
+                }
+            }
+            
+            // Extract real sales data trace
+            let realSalesTrace = null;
+            if (realSalesChart && realSalesChart.data && realSalesChart.data.length > 0) {
+                realSalesTrace = realSalesChart.data[0];
+                realSalesTrace.name = 'Actual Sales';
+                realSalesTrace.marker.color = 'rgba(0, 0, 0, 0.8)';
+                realSalesTrace.marker.size = 6;
+            }
+            
+            // Store the forecast traces
+            window.rfModel = {
+                forecast: rfChart.data[0],
+                confidenceLower: rfChart.data.length > 2 ? rfChart.data[2] : null,
+                confidenceUpper: rfChart.data.length > 1 ? rfChart.data[1] : null,
+                historical: historicalTrace,
+                realSales: realSalesTrace
+            };
+            
+            // Combine data into chart
+            const combinedData = [];
+            
+            // Add historical data if available
+            if (window.rfModel.historical) {
+                window.rfModel.historical.marker.color = 'darkblue';
+                window.rfModel.historical.name = 'Historical Sales Data';
+                combinedData.push(window.rfModel.historical);
+            }
+            
+            // Add real sales data if available
+            if (window.rfModel.realSales) {
+                combinedData.push(window.rfModel.realSales);
+            }
+            
+            // Add RF forecast line
+            window.rfModel.forecast.line.color = 'green';
+            window.rfModel.forecast.name = 'Random Forest Forecast';
+            combinedData.push(window.rfModel.forecast);
+            
+            // Add confidence intervals
+            if (window.rfModel.confidenceLower && window.rfModel.confidenceUpper) {
+                window.rfModel.confidenceLower.fill = 'tonexty';
+                window.rfModel.confidenceLower.fillcolor = 'rgba(0, 128, 0, 0.2)';
+                window.rfModel.confidenceLower.name = 'Confidence Interval (95%)';
+                window.rfModel.confidenceLower.showlegend = false;
+                window.rfModel.confidenceUpper.showlegend = true;
+                window.rfModel.confidenceUpper.name = 'Confidence Interval (95%)';
+                combinedData.push(window.rfModel.confidenceUpper);
+                combinedData.push(window.rfModel.confidenceLower);
+            }
+            
+            // Update layout with improved formatting
+            const layout = rfChart.layout;
+            layout.title = 'Random Forest Forecast with Historical Data';
+            layout.xaxis.tickformat = '%b %d, %Y';
+            layout.xaxis.title_font = {size: 14};
+            layout.xaxis.tickfont = {size: 12};
+            layout.yaxis.title_font = {size: 14};
+            layout.yaxis.tickfont = {size: 12};
+            layout.plot_bgcolor = 'rgba(250,250,250,1)';
+            layout.width = null;  // Use container width
+            layout.autosize = true;
+            layout.margin = {l: 60, r: 30, b: 60, t: 80, pad: 4};
+            
+            // Render chart
+            document.getElementById('rf-forecast-chart').innerHTML = '';
+            Plotly.newPlot('rf-forecast-chart', combinedData, layout);
+        })
+        .catch(error => {
+            console.error('Error loading forecast data:', error);
+            document.getElementById('rf-forecast-chart').innerHTML = 
+                `<div class="alert alert-danger">Error loading forecast data: ${error.message}</div>`;
+        });
+    }
+    
+    // Load forecast on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set default to 2-week timespan
+        const today = new Date();
+        const twoWeeksAgo = new Date(today);
+        twoWeeksAgo.setDate(today.getDate() - 14);
+        document.getElementById('start-date').value = twoWeeksAgo.toISOString().split('T')[0];
+        document.getElementById('end-date').value = today.toISOString().split('T')[0];
+        
+        // Load product options
+        loadProductOptions();
+        
+        // Initial load
+        loadRFForecast();
+        
+        // Handle form submission
+        document.getElementById('forecast-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            loadRFForecast();
+        });
+        
+        // Handle product selection change
+        document.getElementById('product-select').addEventListener('change', function() {
+            document.getElementById('product-id').value = this.value;
+            loadRFForecast();
+        });
+        
+        // Handle product name toggle
+        document.getElementById('toggle-product-name').addEventListener('change', function() {
+            // Reload product options with new display format
+            loadProductOptions();
+        });
+        
+        // Handle store ID change
+        document.getElementById('store-id').addEventListener('change', function() {
+            loadProductOptions();
+        });
+        
+        // Handle toggle switches
+        document.getElementById('toggle-confidence').addEventListener('change', function() {
+            const chart = document.getElementById('rf-forecast-chart');
+            if (chart.data) {
+                // Find confidence interval traces
+                const indices = [];
+                for (let i = 0; i < chart.data.length; i++) {
+                    if (chart.data[i].name && chart.data[i].name.includes('Confidence Interval')) {
+                        indices.push(i);
+                    }
+                }
+                
+                // Toggle visibility
+                const visibility = this.checked ? true : false;
+                if (indices.length > 0) {
+                    Plotly.restyle(chart, {'visible': visibility}, indices);
+                }
+            }
+        });
+        
+        // Toggle historical data
+        document.getElementById('toggle-historical').addEventListener('change', function() {
+            const chart = document.getElementById('rf-forecast-chart');
+            if (chart.data) {
+                // Find historical data trace
+                const indices = [];
+                for (let i = 0; i < chart.data.length; i++) {
+                    if (chart.data[i].name === 'Historical Sales Data') {
+                        indices.push(i);
+                    }
+                }
+                
+                // Toggle visibility
+                const visibility = this.checked ? true : false;
+                if (indices.length > 0) {
+                    Plotly.restyle(chart, {'visible': visibility}, indices);
+                }
+            }
+        });
+        
+        // Toggle trend line
+        document.getElementById('toggle-trend').addEventListener('change', function() {
+            const chart = document.getElementById('rf-forecast-chart');
+            if (this.checked) {
+                // Add trend line if checked
+                if (window.rfModel && window.rfModel.forecast) {
+                    const forecast = window.rfModel.forecast;
+                    if (forecast.x && forecast.y) {
+                        // Simple linear regression
+                        const x = Array.from({length: forecast.y.length}, (_, i) => i);
+                        const y = forecast.y;
+                        
+                        const n = x.length;
+                        const sum_x = x.reduce((a, b) => a + b, 0);
+                        const sum_y = y.reduce((a, b) => a + b, 0);
+                        const sum_xy = x.map((xi, i) => xi * y[i]).reduce((a, b) => a + b, 0);
+                        const sum_xx = x.map(xi => xi * xi).reduce((a, b) => a + b, 0);
+                        
+                        const slope = (n * sum_xy - sum_x * sum_y) / (n * sum_xx - sum_x * sum_x);
+                        const intercept = (sum_y - slope * sum_x) / n;
+                        
+                        // Create trend line
+                        const trend_x = [...forecast.x];
+                        const trend_y = x.map(xi => intercept + slope * xi);
+                        
+                        const trendLine = {
+                            x: trend_x,
+                            y: trend_y,
+                            mode: 'lines',
+                            name: 'RF Trend',
+                            line: {
+                                color: 'green',
+                                width: 2,
+                                dash: 'dash'
+                            }
+                        };
+                        
+                        // Add trend line to chart
+                        Plotly.addTraces(chart, [trendLine]);
+                    }
+                }
+            } else {
+                // Remove trend line when unchecked
+                const indicesToRemove = [];
+                for (let i = 0; i < chart.data.length; i++) {
+                    if (chart.data[i].name && chart.data[i].name.includes('Trend')) {
+                        indicesToRemove.push(i);
+                    }
+                }
+                
+                if (indicesToRemove.length > 0) {
+                    Plotly.deleteTraces(chart, indicesToRemove);
+                }
+            }
+        });
+        
+        // Date preset handling
+        document.getElementById('date-preset').addEventListener('change', function() {
+            const preset = this.value;
+            const today = new Date();
+            let startDate, endDate;
+            
+            switch(preset) {
+                case 'last7':
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - 7);
+                    endDate = new Date(today);
+                    break;
+                case 'last14':
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - 14);
+                    endDate = new Date(today);
+                    break;
+                case 'last30':
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - 30);
+                    endDate = new Date(today);
+                    break;
+                case 'last90':
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - 90);
+                    endDate = new Date(today);
+                    break;
+                case 'next7':
+                    startDate = new Date(today);
+                    endDate = new Date(today);
+                    endDate.setDate(today.getDate() + 7);
+                    break;
+                case 'next14':
+                    startDate = new Date(today);
+                    endDate = new Date(today);
+                    endDate.setDate(today.getDate() + 14);
+                    break;
+                case 'next30':
+                    startDate = new Date(today);
+                    endDate = new Date(today);
+                    endDate.setDate(today.getDate() + 30);
+                    break;
+                default:
+                    // Full range - clear the date inputs
+                    document.getElementById('start-date').value = '';
+                    document.getElementById('end-date').value = '';
+                    return;
+            }
+            
+            // Format dates for input fields (YYYY-MM-DD)
+            document.getElementById('start-date').value = startDate.toISOString().split('T')[0];
+            document.getElementById('end-date').value = endDate.toISOString().split('T')[0];
+            
+            // Auto-update the forecast when date preset changes
+            loadRFForecast();
+        });
+    });
+</script>
+{% endblock %}

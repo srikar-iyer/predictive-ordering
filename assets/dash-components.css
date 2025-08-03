@@ -1,0 +1,75 @@
+/**
+ * Styles specific to Dash components in the Pizza Predictive Ordering System
+ * This file consolidates all Dash-specific styles that were previously scattered
+ * across inline styles and multiple CSS files.
+ */
+
+/* === Dash Table Styles === */
+.dash-spreadsheet-container {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.dash-spreadsheet {
+  min-width: 100%;
+}
+
+/* === Dash Select Dropdown === */
+.Select-control, .Select-menu-outer {
+  height: 38px;
+}
+
+.Select-placeholder, .Select--single > .Select-control .Select-value {
+  line-height: 36px;
+}
+
+/* === Dash Loading Animation === */
+.dash-loading-callback {
+  border-radius: var(--border-radius);
+  min-height: 150px;
+}
+
+/* === Dash Table Container === */
+.dash-table-container {
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--box-shadow);
+}
+
+.dash-table-container .dash-spreadsheet-container {
+  font-size: 0.9rem;
+}
+
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner th {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.75rem;
+}
+
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td {
+  padding: 0.75rem;
+}
+
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner tr:nth-of-type(even) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* === Responsive adjustments for Dash components === */
+@media (max-width: 768px) {
+  .Select-control, .Select-menu-outer {
+    height: 38px !important;
+  }
+  
+  .Select-placeholder, .Select--single > .Select-control .Select-value {
+    line-height: 36px !important;
+  }
+  
+  .dash-spreadsheet-container {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  
+  .dash-spreadsheet {
+    min-width: 100%;
+  }
+}

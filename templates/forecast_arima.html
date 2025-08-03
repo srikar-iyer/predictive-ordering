@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}ARIMA Forecast - Predictive Ordering System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">ARIMA Sales Forecast</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Model Information</h5>
+                </div>
+                <div class="card-body">
+                    <p>The ARIMA (AutoRegressive Integrated Moving Average) model is a statistical time series forecasting approach with the following characteristics:</p>
+                    <ul>
+                        <li>Captures temporal dependencies in time series data</li>
+                        <li>Handles seasonality and trend components</li>
+                        <li>Provides confidence intervals based on statistical properties</li>
+                        <li>Well-suited for stable patterns with clear seasonal components</li>
+                    </ul>
+                    <p class="text-muted small">ARIMA models excel at capturing underlying temporal patterns in sales data when historical patterns are consistent.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Forecast Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="forecast-form">
+                        <div class="mb-3">
+                            <label for="store-id" class="form-label">Store ID</label>
+                            <input type="text" class="form-control" id="store-id" value="104.0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-select" class="form-label">Product</label>
+                            <select class="form-select" id="product-select">
+                                <option value="3913116850.0" selected>BELLATORIA BBQ CHK PIZZA</option>
+                                <!-- More products will be populated dynamically -->
+                            </select>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="toggle-product-name" checked>
+                                <label class="form-check-label" for="toggle-product-name">Show Product Name</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-id" class="form-label">Product ID</label>
+                            <input type="text" class="form-control" id="product-id" value="3913116850.0" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date-preset" class="form-label">Date Range Preset</label>
+                            <select class="form-select" id="date-preset">
+                                <option value="full" selected>Full Range</option>
+                                <option value="last7">Last 7 Days</option>
+                                <option value="last30">Last 30 Days</option>
+                                <option value="last90">Last 90 Days</option>
+                                <option value="next7">Next 7 Days</option>
+                                <option value="next30">Next 30 Days</option>
+                                <option value="next90">Next 90 Days</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date-range" class="form-label">Custom Date Range</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="start-date">
+                                <span class="input-group-text">to</span>
+                                <input type="date" class="form-control" id="end-date">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Update Forecast</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">ARIMA Forecast Visualization</h5>
+                </div>
+                <div class="card-body">
+                    <div id="arima-forecast-chart" style="height: 600px; width: 100%; overflow-x: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/date-range-utility.js') }}"></script>
+<script>
+    // Function to fetch and display ARIMA forecast
+    function loadARIMAForecast() {
+        // Get form values
+        const storeId = document.getElementById('store-id').value;
+        const productId = document.getElementById('product-id').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        // Build query string
+        let queryParams = [];
+        if (storeId) queryParams.push(`store_id=${storeId}`);
+        if (productId) queryParams.push(`product_id=${productId}`);
+        if (startDate) queryParams.push(`start_date=${startDate}`);
+        if (endDate) queryParams.push(`end_date=${endDate}`);
+        const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+        
+        // Show loading indicator
+        document.getElementById('arima-forecast-chart').innerHTML = `
+            <div class="d-flex justify-content-center align-items-center h-100">
+                <div class="spinner-border text-danger" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>`;
+            
+        // Fetch both ARIMA forecast data and historical sales data
+        Promise.all([
+            fetch(`/api/arima-forecast-data${queryString}`).then(response => response.json()),
+            fetch(`/api/historical-sales-data${queryString}`).then(response => response.json())
+        ])
+        .then(([arimaData, salesData]) => {
+            const arimaChart = JSON.parse(arimaData);
+            const salesChart = JSON.parse(salesData);
+            
+            // Extract real sales data trace
+            let salesTrace = null;
+            if (salesChart && salesChart.data && salesChart.data.length > 0) {
+                salesTrace = salesChart.data[0];
+                salesTrace.name = 'Actual Sales';
+                salesTrace.marker.color = 'rgba(0, 0, 0, 0.8)';
+                salesTrace.marker.size = 6;
+            }
+            
+            // Combine the data
+            const combinedData = [];
+            
+            // Add sales data first if available
+            if (salesTrace) {
+                combinedData.push(salesTrace);
+            }
+            
+            // Add ARIMA forecast traces
+            arimaChart.data.forEach(trace => {
+                combinedData.push(trace);
+            });
+            
+            // Update layout
+            const layout = arimaChart.layout;
+            layout.width = null;  // Use container width
+            layout.autosize = true;
+            layout.margin = {l: 60, r: 30, b: 60, t: 80, pad: 4};
+            
+            // Render the combined chart
+            Plotly.newPlot('arima-forecast-chart', combinedData, layout);
+        })
+            .catch(error => {
+                console.error('Error loading forecast data:', error);
+                document.getElementById('arima-forecast-chart').innerHTML = 
+                    `<div class="alert alert-danger">Error loading forecast data: ${error.message}</div>`;
+            });
+    }
+    
+    // Function to load product options from API
+    function loadProductOptions() {
+        const storeId = document.getElementById('store-id').value;
+        fetch(`/api/product-dropdown-data?store_id=${storeId}`)
+            .then(response => response.json())
+            .then(data => {
+                const productSelect = document.getElementById('product-select');
+                // Clear existing options
+                productSelect.innerHTML = '';
+                
+                // Get product display mode
+                const showProductName = document.getElementById('toggle-product-name').checked;
+                
+                // Add new options
+                data.products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = showProductName ? 
+                        product.name : 
+                        product.id;
+                    option.dataset.name = product.name;
+                    option.dataset.id = product.id;
+                    productSelect.appendChild(option);
+                });
+                
+                // Update product ID field based on selection
+                if (data.products.length > 0) {
+                    document.getElementById('product-id').value = productSelect.value;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading product options:', error);
+            });
+    }
+    
+    // Load forecast on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load product options first
+        loadProductOptions();
+        
+        // Then load forecast
+        loadARIMAForecast();
+        
+        // Handle form submission
+        document.getElementById('forecast-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            loadARIMAForecast();
+        });
+        
+        // Handle product selection change
+        document.getElementById('product-select').addEventListener('change', function() {
+            document.getElementById('product-id').value = this.value;
+            loadARIMAForecast();
+        });
+        
+        // Handle product name toggle
+        document.getElementById('toggle-product-name').addEventListener('change', function() {
+            // Reload product options with new display format
+            loadProductOptions();
+        });
+        
+        // Handle store ID change
+        document.getElementById('store-id').addEventListener('change', function() {
+            loadProductOptions();
+        });
+    });
+</script>
+{% endblock %}

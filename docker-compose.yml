@@ -1,0 +1,30 @@
+services:
+  predictive-ordering-better:
+    build:
+      context: .
+      dockerfile: Dockerfile.simplified
+    ports:
+      - "8050:8050"  # Expose Plotly Dash port
+    volumes:
+      - output-data:/app/output
+      - ./static:/app/static
+      - ./models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1  # Enable real-time logging
+      - PORT=8050           # Port configuration
+      - HOST=0.0.0.0        # Listen on all network interfaces
+      - AWS_REGION=${AWS_REGION:-us-east-1}  # Default AWS region if not specified
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8050/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  output-data:  # Named volume for persisting output data across container restarts

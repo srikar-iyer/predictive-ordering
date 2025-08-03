@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Predictive Ordering System - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">Predictive Ordering System</h1>
+            <p class="lead">A comprehensive system for sales forecasting, inventory optimization, and price sensitivity analysis.</p>
+            <hr class="my-4">
+            <p>Use the navigation bar to explore different aspects of the system or go directly to the dashboard.</p>
+            <a class="btn btn-primary btn-lg" href="/dashboard" role="button">
+                <i class="fas fa-chart-line"></i> Go to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-chart-line"></i> Sales Forecasting</h5>
+            </div>
+            <div class="card-body">
+                <p>View sales forecasts with confidence intervals, adjust for weather impacts, and analyze seasonal patterns.</p>
+                <a href="/forecast" class="btn btn-outline-primary">View Forecasts</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-tags"></i> Price Optimization</h5>
+            </div>
+            <div class="card-body">
+                <p>Analyze price elasticity, identify optimal price points, and evaluate profit impact across products.</p>
+                <a href="/pricing" class="btn btn-outline-success">Optimize Pricing</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5><i class="fas fa-boxes"></i> Inventory Management</h5>
+            </div>
+            <div class="card-body">
+                <p>Track inventory levels, set safety stock thresholds, and minimize stockout risks.</p>
+                <a href="/inventory" class="btn btn-outline-warning">Manage Inventory</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5><i class="fas fa-sync-alt"></i> Integrated View</h5>
+            </div>
+            <div class="card-body">
+                <p>See how sales forecasts, price sensitivity, and inventory levels interact in a comprehensive view.</p>
+                <a href="/integrated" class="btn btn-outline-info">Integrated View</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

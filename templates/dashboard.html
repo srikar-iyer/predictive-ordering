@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}Predictive Ordering System - Dashboard{% endblock %}
+
+{% block head_extra %}
+<style>
+    .chart-container {
+        height: 400px;
+        margin-bottom: 20px;
+    }
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 400px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>Dashboard Overview</h2>
+        <p>This dashboard provides a comprehensive view of sales forecasts, inventory management, and price optimization.</p>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <!-- Filters -->
+    <div class="col-md-12">
+        <div class="card mb-3">
+            <div class="card-header bg-secondary text-white">
+                <h5><i class="fas fa-filter"></i> Filters</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="store-select" class="form-label">Store</label>
+                            <select class="form-select" id="store-select">
+                                <option value="all">All Stores</option>
+                                <!-- Store options will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="product-select" class="form-label">Product</label>
+                            <select class="form-select" id="product-select">
+                                <option value="all">All Products</option>
+                                <!-- Product options will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="date-range" class="form-label">Date Range</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="start-date" value="2023-01-01">
+                                <span class="input-group-text">to</span>
+                                <input type="date" class="form-control" id="end-date" value="2023-03-01">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button id="apply-filters" class="btn btn-primary w-100">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Main Charts -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Sales Forecast with Confidence Intervals</h5>
+            </div>
+            <div class="card-body">
+                <div id="forecast-chart" class="chart-container">
+                    <div class="loading-container">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="toggle-confidence" checked>
+                    <label class="form-check-label" for="toggle-confidence">Show Confidence Intervals</label>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="toggle-actual" checked>
+                    <label class="form-check-label" for="toggle-actual">Show Actual Sales</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Key Metrics -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Price Elasticity Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div id="elasticity-chart" class="chart-container">
+                    <div class="loading-container">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Price Sensitivity -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Price Sensitivity Curve</h5>
+            </div>
+            <div class="card-body">
+                <div id="price-chart" class="chart-container">
+                    <div class="loading-container">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Profit Impact -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Profit Impact of Price Changes</h5>
+            </div>
+            <div class="card-body">
+                <div id="profit-chart" class="chart-container">
+                    <div class="loading-container">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Function to load chart data
+    function loadChart(endpoint, elementId) {
+        fetch(endpoint)
+            .then(response => response.json())
+            .then(data => {
+                // Parse the JSON string back to an object
+                const chartData = JSON.parse(data);
+                
+                // Clear loading spinner
+                document.getElementById(elementId).innerHTML = '';
+                
+                // Render the chart
+                Plotly.newPlot(elementId, chartData.data, chartData.layout);
+            })
+            .catch(error => {
+                console.error('Error loading chart:', error);
+                document.getElementById(elementId).innerHTML = '<div class="alert alert-danger">Error loading chart data</div>';
+            });
+    }
+    
+    // Load all charts when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load dropdown data first
+        loadStoreOptions();
+        loadProductOptions();
+        
+        // Then load charts
+        loadChart('/api/forecast-data', 'forecast-chart');
+        loadChart('/api/elasticity-data', 'elasticity-chart');
+        loadChart('/api/price-sensitivity', 'price-chart');
+        loadChart('/api/profit-impact', 'profit-chart');
+        
+        // Toggle confidence intervals
+        document.getElementById('toggle-confidence').addEventListener('change', function() {
+            const forechart = document.getElementById('forecast-chart');
+            if (forechart.data && forechart.data.length >= 3) {
+                const visibility = this.checked ? true : false;
+                Plotly.restyle(forechart, {'visible': visibility}, [1, 2]);
+            }
+        });
+        
+        // Toggle actual sales
+        document.getElementById('toggle-actual').addEventListener('change', function() {
+            const forechart = document.getElementById('forecast-chart');
+            if (forechart.data && forechart.data.length >= 4) {
+                const visibility = this.checked ? true : false;
+                Plotly.restyle(forechart, {'visible': visibility}, [3]);
+            }
+        });
+        
+        // Store dropdown change event - update product options
+        document.getElementById('store-select').addEventListener('change', function() {
+            loadProductOptions(this.value);
+        });
+        
+        // Apply filters button
+        document.getElementById('apply-filters').addEventListener('click', function() {
+            // Get selected store and product
+            const storeId = document.getElementById('store-select').value;
+            const productId = document.getElementById('product-select').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            // Build query parameters
+            const params = new URLSearchParams();
+            if (storeId !== 'all') params.append('store_id', storeId);
+            if (productId !== 'all') params.append('product_id', productId);
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+            
+            // Reload charts with parameters
+            const queryString = params.toString();
+            const queryPrefix = queryString ? '?' : '';
+            
+            loadChart(`/api/forecast-data${queryPrefix}${queryString}`, 'forecast-chart');
+            loadChart(`/api/elasticity-data${queryPrefix}${queryString}`, 'elasticity-chart');
+            loadChart(`/api/price-sensitivity${queryPrefix}${queryString}`, 'price-chart');
+            loadChart(`/api/profit-impact${queryPrefix}${queryString}`, 'profit-chart');
+        });
+    });
+    
+    // Function to load store options
+    function loadStoreOptions() {
+        fetch('/api/store-dropdown-data')
+            .then(response => response.json())
+            .then(data => {
+                const storeSelect = document.getElementById('store-select');
+                // Clear existing options except the first one (All Stores)
+                while (storeSelect.options.length > 1) {
+                    storeSelect.remove(1);
+                }
+                
+                // Add new options
+                data.stores.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store.id;
+                    option.textContent = store.name;
+                    storeSelect.appendChild(option);
+                });
+                
+                // Set default selection if only one store
+                if (data.stores.length === 1) {
+                    storeSelect.value = data.stores[0].id;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading store options:', error);
+            });
+    }
+    
+    // Function to load product options
+    function loadProductOptions(storeId = 'all') {
+        // Build URL with store filter if provided
+        const url = storeId !== 'all' ? 
+            `/api/product-dropdown-data?store_id=${storeId}` : 
+            '/api/product-dropdown-data';
+            
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const productSelect = document.getElementById('product-select');
+                // Clear existing options except the first one (All Products)
+                while (productSelect.options.length > 1) {
+                    productSelect.remove(1);
+                }
+                
+                // Add new options
+                data.products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = `${product.name} (${product.size})`;
+                    productSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading product options:', error);
+            });
+    }
+</script>
+{% endblock %}

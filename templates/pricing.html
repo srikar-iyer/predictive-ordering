@@ -1,0 +1,510 @@
+{% extends "base.html" %}
+
+{% block title %}Predictive Ordering System - Price Optimization{% endblock %}
+
+{% block head_extra %}
+<style>
+    .chart-container {
+        height: 400px;
+        margin-bottom: 20px;
+    }
+    .control-panel {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .recommendation-card {
+        border-left: 4px solid #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>Price Optimization</h2>
+        <p>Analyze price elasticity and optimize pricing strategies for maximum profit.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Control Panel -->
+    <div class="col-md-12">
+        <div class="card control-panel">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="store-select" class="form-label">Store</label>
+                            <select class="form-select" id="store-select">
+                                <option value="all">All Stores</option>
+                                <!-- Store options will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="product-select" class="form-label">Product</label>
+                            <select class="form-select" id="product-select">
+                                <option value="all">All Products</option>
+                                <!-- Product options will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="category-select" class="form-label">Category</label>
+                            <select class="form-select" id="category-select">
+                                <option value="all">All Categories</option>
+                                <option value="1">Dairy</option>
+                                <option value="2">Produce</option>
+                                <option value="3">Bakery</option>
+                                <option value="4">Meat</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button id="apply-filters" class="btn btn-primary w-100">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Price Elasticity Distribution -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Price Elasticity Distribution</h5>
+                <div class="btn-group float-end" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-elasticity-png">
+                        <i class="fas fa-download"></i> PNG
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-elasticity-csv">
+                        <i class="fas fa-download"></i> CSV
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="elasticity-chart" class="chart-container">
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Price Sensitivity Curve -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Price Sensitivity Curve</h5>
+                <div class="btn-group float-end" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-sensitivity-png">
+                        <i class="fas fa-download"></i> PNG
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-sensitivity-csv">
+                        <i class="fas fa-download"></i> CSV
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="price-chart" class="chart-container">
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Profit Impact Chart -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Profit Impact of Price Changes</h5>
+                <div class="btn-group float-end" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-profit-png">
+                        <i class="fas fa-download"></i> PNG
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-profit-csv">
+                        <i class="fas fa-download"></i> CSV
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="profit-chart" class="chart-container">
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Price Recommendations -->
+    <div class="col-md-4">
+        <div class="card recommendation-card">
+            <div class="card-header bg-light">
+                <h5><i class="fas fa-lightbulb text-warning"></i> Price Recommendations</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6>Optimal Price Point</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Current Price:</span>
+                        <span id="current-price" class="badge bg-secondary p-2">$9.99</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span>Recommended Price:</span>
+                        <span id="recommended-price" class="badge bg-success p-2">$12.49</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span>Potential Profit Increase:</span>
+                        <span id="profit-increase" class="badge bg-info p-2">+24.5%</span>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Price Strategy</h6>
+                    <p id="price-strategy" class="mb-2">
+                        Based on elasticity analysis, this product can tolerate a price increase without significantly impacting demand. Consider a gradual increase to maximize profit.
+                    </p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Competitive Analysis</h6>
+                    <p id="competitive-analysis" class="mb-2">
+                        Current price is below market average by 12%. Price increase will still maintain competitive positioning while improving margins.
+                    </p>
+                </div>
+                
+                <button class="btn btn-outline-success btn-sm" id="apply-price">Apply Recommended Price</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Price Elasticity Table -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Price Elasticity Data</h5>
+                <div class="btn-group float-end" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="export-table-csv">
+                        <i class="fas fa-download"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Current Price</th>
+                                <th>Cost</th>
+                                <th>Margin</th>
+                                <th>Elasticity</th>
+                                <th>Optimal Price</th>
+                                <th>Potential Profit Increase</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="elasticity-table-body">
+                            <tr>
+                                <td colspan="8" class="text-center">Loading data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load dropdown data first
+        loadStoreOptions();
+        loadProductOptions();
+        
+        // Load elasticity chart
+        fetch('/api/elasticity-data')
+            .then(response => response.json())
+            .then(data => {
+                const chartData = JSON.parse(data);
+                document.getElementById('elasticity-chart').innerHTML = '';
+                Plotly.newPlot('elasticity-chart', chartData.data, chartData.layout);
+            })
+            .catch(error => {
+                console.error('Error loading elasticity chart:', error);
+                document.getElementById('elasticity-chart').innerHTML = 
+                    '<div class="alert alert-danger">Error loading elasticity data</div>';
+            });
+            
+        // Load price sensitivity chart
+        fetch('/api/price-sensitivity')
+            .then(response => response.json())
+            .then(data => {
+                const chartData = JSON.parse(data);
+                document.getElementById('price-chart').innerHTML = '';
+                Plotly.newPlot('price-chart', chartData.data, chartData.layout);
+            })
+            .catch(error => {
+                console.error('Error loading price sensitivity chart:', error);
+                document.getElementById('price-chart').innerHTML = 
+                    '<div class="alert alert-danger">Error loading price sensitivity data</div>';
+            });
+            
+        // Load profit impact chart
+        fetch('/api/profit-impact')
+            .then(response => response.json())
+            .then(data => {
+                const chartData = JSON.parse(data);
+                document.getElementById('profit-chart').innerHTML = '';
+                Plotly.newPlot('profit-chart', chartData.data, chartData.layout);
+                
+                // Populate the table with dummy data
+                populateElasticityTable();
+            })
+            .catch(error => {
+                console.error('Error loading profit impact chart:', error);
+                document.getElementById('profit-chart').innerHTML = 
+                    '<div class="alert alert-danger">Error loading profit impact data</div>';
+            });
+            
+        // Export buttons functionality
+        document.getElementById('export-elasticity-png').addEventListener('click', function() {
+            Plotly.downloadImage('elasticity-chart', {
+                format: 'png', 
+                filename: 'elasticity_distribution'
+            });
+        });
+        
+        document.getElementById('export-sensitivity-png').addEventListener('click', function() {
+            Plotly.downloadImage('price-chart', {
+                format: 'png', 
+                filename: 'price_sensitivity'
+            });
+        });
+        
+        document.getElementById('export-profit-png').addEventListener('click', function() {
+            Plotly.downloadImage('profit-chart', {
+                format: 'png', 
+                filename: 'profit_impact'
+            });
+        });
+        
+        // Apply recommended price button
+        document.getElementById('apply-price').addEventListener('click', function() {
+            alert('In a production app, this would apply the recommended price to the selected product');
+        });
+        
+        // Populate elasticity table with dummy data
+        function populateElasticityTable() {
+            const tableBody = document.getElementById('elasticity-table-body');
+            tableBody.innerHTML = '';
+            
+            // Generate dummy data
+            for (let i = 1; i <= 10; i++) {
+                const price = (Math.random() * 10 + 5).toFixed(2);
+                const cost = (price * (Math.random() * 0.4 + 0.3)).toFixed(2);
+                const margin = ((price - cost) / price * 100).toFixed(1);
+                const elasticity = (-Math.random() * 2 - 0.1).toFixed(2);
+                const optimalPrice = (price * (1 + Math.random() * 0.3 - 0.1)).toFixed(2);
+                const potentialIncrease = (Math.random() * 30).toFixed(1);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>Product ${i}</td>
+                    <td>$${price}</td>
+                    <td>$${cost}</td>
+                    <td>${margin}%</td>
+                    <td>${elasticity}</td>
+                    <td>$${optimalPrice}</td>
+                    <td>+${potentialIncrease}%</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary">Apply</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            }
+            
+            // Add event listeners to apply buttons
+            const applyButtons = document.querySelectorAll('#elasticity-table-body button');
+            applyButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const product = this.parentElement.parentElement.cells[0].textContent;
+                    const optimalPrice = this.parentElement.parentElement.cells[5].textContent;
+                    alert(`In a production app, this would apply the optimal price of ${optimalPrice} to ${product}`);
+                });
+            });
+        }
+        
+        // Store dropdown change event - update product options
+        document.getElementById('store-select').addEventListener('change', function() {
+            loadProductOptions(this.value);
+        });
+        
+        // Apply filters button
+        document.getElementById('apply-filters').addEventListener('click', function() {
+            // Get selected values
+            const storeId = document.getElementById('store-select').value;
+            const productId = document.getElementById('product-select').value;
+            const categoryId = document.getElementById('category-select').value;
+            
+            // Build query parameters
+            const params = new URLSearchParams();
+            if (storeId !== 'all') params.append('store_id', storeId);
+            if (productId !== 'all') params.append('product_id', productId);
+            if (categoryId !== 'all') params.append('category_id', categoryId);
+            
+            // Reload data with the new filters
+            const queryString = params.toString();
+            const queryPrefix = queryString ? '?' : '';
+            
+            // Reload all charts with the new parameters
+            fetch(`/api/elasticity-data${queryPrefix}${queryString}`)
+                .then(response => response.json())
+                .then(data => {
+                    const chartData = JSON.parse(data);
+                    document.getElementById('elasticity-chart').innerHTML = '';
+                    Plotly.newPlot('elasticity-chart', chartData.data, chartData.layout);
+                })
+                .catch(error => {
+                    console.error('Error loading elasticity chart:', error);
+                });
+                
+            fetch(`/api/price-sensitivity${queryPrefix}${queryString}`)
+                .then(response => response.json())
+                .then(data => {
+                    const chartData = JSON.parse(data);
+                    document.getElementById('price-chart').innerHTML = '';
+                    Plotly.newPlot('price-chart', chartData.data, chartData.layout);
+                })
+                .catch(error => {
+                    console.error('Error loading price sensitivity chart:', error);
+                });
+                
+            fetch(`/api/profit-impact${queryPrefix}${queryString}`)
+                .then(response => response.json())
+                .then(data => {
+                    const chartData = JSON.parse(data);
+                    document.getElementById('profit-chart').innerHTML = '';
+                    Plotly.newPlot('profit-chart', chartData.data, chartData.layout);
+                    
+                    // Reload table with filtered data
+                    populateElasticityTable();
+                })
+                .catch(error => {
+                    console.error('Error loading profit impact chart:', error);
+                });
+                
+            // Update price recommendation panel
+            updatePriceRecommendation(productId);
+        });
+    });
+    
+    // Function to load store options
+    function loadStoreOptions() {
+        fetch('/api/store-dropdown-data')
+            .then(response => response.json())
+            .then(data => {
+                const storeSelect = document.getElementById('store-select');
+                // Clear existing options except the first one (All Stores)
+                while (storeSelect.options.length > 1) {
+                    storeSelect.remove(1);
+                }
+                
+                // Add new options
+                data.stores.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store.id;
+                    option.textContent = store.name;
+                    storeSelect.appendChild(option);
+                });
+                
+                // Set default selection if only one store
+                if (data.stores.length === 1) {
+                    storeSelect.value = data.stores[0].id;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading store options:', error);
+            });
+    }
+    
+    // Function to load product options
+    function loadProductOptions(storeId = 'all') {
+        // Build URL with store filter if provided
+        const url = storeId !== 'all' ? 
+            `/api/product-dropdown-data?store_id=${storeId}` : 
+            '/api/product-dropdown-data';
+            
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const productSelect = document.getElementById('product-select');
+                // Clear existing options except the first one (All Products)
+                while (productSelect.options.length > 1) {
+                    productSelect.remove(1);
+                }
+                
+                // Add new options
+                data.products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = `${product.name} (${product.size})`;
+                    productSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading product options:', error);
+            });
+    }
+    
+    // Function to update price recommendation panel based on selected product
+    function updatePriceRecommendation(productId) {
+        if (productId === 'all') {
+            // If no specific product is selected, show generic message
+            document.getElementById('current-price').textContent = "$9.99";
+            document.getElementById('recommended-price').textContent = "$12.49";
+            document.getElementById('profit-increase').textContent = "+24.5%";
+            document.getElementById('price-strategy').textContent = 
+                "Select a specific product to see detailed pricing recommendations.";
+            document.getElementById('competitive-analysis').textContent = 
+                "Competitive analysis is available for individual products.";
+        } else {
+            // In a real app, this would fetch product-specific data
+            // For now, we'll just show different values based on the product ID
+            const price = (parseFloat(productId) % 10 + 5).toFixed(2);
+            const recommendedPrice = (parseFloat(price) * 1.15).toFixed(2);
+            const profitIncrease = ((parseFloat(recommendedPrice) / parseFloat(price) - 1) * 100).toFixed(1);
+            
+            document.getElementById('current-price').textContent = `$${price}`;
+            document.getElementById('recommended-price').textContent = `$${recommendedPrice}`;
+            document.getElementById('profit-increase').textContent = `+${profitIncrease}%`;
+            document.getElementById('price-strategy').textContent = 
+                `Based on elasticity analysis, this product (ID: ${productId}) can tolerate a price increase without significantly impacting demand. Consider a gradual increase to maximize profit.`;
+            document.getElementById('competitive-analysis').textContent = 
+                `Current price for product ${productId} is below market average. Price increase will still maintain competitive positioning while improving margins.`;
+        }
+    }
+</script>
+{% endblock %}
