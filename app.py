@@ -289,7 +289,8 @@ def inventory_forecast_data():
                 y=stock_levels,
                 mode='lines+markers',
                 name='Current Stock',
-                line=dict(color='blue', width=2)
+                line=dict(color='blue', width=2),
+                marker=dict(size=6, color='blue')
             ))
             
             # Add forecast line
@@ -384,7 +385,8 @@ def inventory_forecast_data():
                 y=inventory_df['Stock_Level'],
                 mode='lines+markers',
                 name='Current Stock',
-                line=dict(color='blue', width=2)
+                line=dict(color='blue', width=2),
+                marker=dict(size=6, color='blue')
             ))
             
             # Add forecast line
@@ -503,15 +505,22 @@ def forecast_data():
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
         timespan = int(request.args.get('timespan', '14'))  # Default to 2 weeks (14 days)
+        forecast_days = int(request.args.get('forecast_days', '14'))  # Default to 2 weeks forecast
         show_confidence = request.args.get('show_confidence', 'true').lower() == 'true'
         chart_height = int(request.args.get('chart_height', '600'))
         
-        # Set default date range to show data from 2023 to 07/08/2025 if not provided
-        if not start_date or not end_date:
-            if not start_date:
-                start_date = '2023-01-01'  # Start from beginning of 2023
-            if not end_date:
-                end_date = '2025-07-08'    # Up to July 8, 2025
+        # Set reference date for historical vs forecast cutoff (July 8, 2025)
+        reference_date = pd.to_datetime('2025-07-08')
+        
+        # Default date handling
+        if not start_date:
+            start_date = '2023-01-01'  # Start from beginning of 2023
+        else:
+            start_date = pd.to_datetime(start_date)
+            
+        if not end_date:
+            # Calculate end date as reference_date + forecast_days
+            end_date = (reference_date + pd.Timedelta(days=forecast_days))
         
         # Determine which forecast data to load based on model
         forecast_type = f"{forecast_model}_forecasts" if forecast_model in ['rf', 'arima', 'pytorch'] else 'forecast'
@@ -557,14 +566,28 @@ def forecast_data():
             if not pd.api.types.is_datetime64_dtype(forecast_df['Date']):
                 forecast_df['Date'] = pd.to_datetime(forecast_df['Date'])
             
-            # Apply date filters if provided
-            if start_date:
-                start_date = pd.to_datetime(start_date)
-                forecast_df = forecast_df[forecast_df['Date'] >= start_date]
-                
-            if end_date:
-                end_date = pd.to_datetime(end_date)
-                forecast_df = forecast_df[forecast_df['Date'] <= end_date]
+            # Apply our filtering strategy:
+            # 1. For historical data, show everything up to the reference date (July 8, 2025)
+            # 2. For forecast data after reference date, limit to forecast_days
+            
+            # First, split data into historical and forecast portions
+            historical_portion = forecast_df[forecast_df['Date'] < reference_date]
+            forecast_portion = forecast_df[forecast_df['Date'] >= reference_date]
+            
+            # Filter the historical portion by user-provided date range if specified
+            if isinstance(start_date, pd.Timestamp):
+                historical_portion = historical_portion[historical_portion['Date'] >= start_date]
+            
+            # For the forecast portion, limit to forecast_days after reference_date
+            forecast_end = reference_date + pd.Timedelta(days=forecast_days)
+            if isinstance(end_date, pd.Timestamp):
+                # If user specified an end date, use the earlier of user end date or forecast_end
+                forecast_end = min(end_date, forecast_end)
+            
+            forecast_portion = forecast_portion[forecast_portion['Date'] <= forecast_end]
+            
+            # Recombine the data
+            forecast_df = pd.concat([historical_portion, forecast_portion])
             
             # Get historical data if available
             historical_df = None
@@ -606,16 +629,20 @@ def forecast_data():
                     sales_col = 'Sales' 
                     if 'Units_Sold' in historical_df.columns and 'Sales' not in historical_df.columns:
                         sales_col = 'Units_Sold'
-                        
-                    fig.add_trace(go.Scatter(
-                        x=historical_df['Date'],
-                        y=historical_df[sales_col],
-                        mode='lines+markers',
-                        name='Historical Sales',
-                        line=dict(color='darkblue', width=2),
-                        marker=dict(size=4, color='darkblue'),
-                        hovertemplate='<b>Historical Sales</b><br>Date: %{x}<br>Units: %{y:.0f}<extra></extra>'
-                    ))
+                    
+                    # Only show historical data up to the reference date
+                    historical_df = historical_df[historical_df['Date'] < reference_date]
+                    
+                    if len(historical_df) > 0:
+                        fig.add_trace(go.Scatter(
+                            x=historical_df['Date'],
+                            y=historical_df[sales_col],
+                            mode='lines+markers',
+                            name='Historical Sales',
+                            line=dict(color='darkblue', width=2),
+                            marker=dict(size=6, color='darkblue'),
+                            hovertemplate='<b>Historical Sales</b><br>Date: %{x}<br>Units: %{y:.0f}<extra></extra>'
+                        ))
                 
                 # Add historical sales data from CSV (if available)
                 historical_data = get_data('combined_data')
@@ -633,14 +660,17 @@ def forecast_data():
                         sales_col = 'Sales'
                         if 'Sales' not in historical_df.columns and 'Units_Sold' in historical_df.columns:
                             sales_col = 'Units_Sold'
+                        elif 'Sales' not in historical_df.columns and 'Total_units' in historical_df.columns:
+                            sales_col = 'Total_units'  # Use original schema column if available
                             
                         # Add historical data trace
                         fig.add_trace(go.Scatter(
                             x=historical_df['Date'],
                             y=historical_df[sales_col],
-                            mode='markers',
+                            mode='lines+markers',
                             name='Historical Sales',
-                            marker=dict(size=5, color='blue'),
+                            line=dict(color='blue', width=2),
+                            marker=dict(size=6, color='blue'),
                             hovertemplate='<b>Historical Sales</b><br>Date: %{x}<br>Units: %{y:.0f}<extra></extra>'
                         ))
                 
@@ -650,7 +680,7 @@ def forecast_data():
                     y=forecast_df[forecast_col],
                     mode='lines+markers',
                     name=f'{forecast_model.upper()} Forecast',
-                    line=dict(color='orange', width=3, dash='solid'),
+                    line=dict(color='orange', width=2),
                     marker=dict(size=6, color='orange', symbol='diamond'),
                     hovertemplate=f'<b>{forecast_model.upper()} Forecast</b><br>Date: %{{x}}<br>Predicted Units: %{{y:.1f}}<extra></extra>'
                 ))
@@ -713,14 +743,37 @@ def forecast_data():
                 if upper_bound_col in forecast_df.columns:
                     y_values.extend(forecast_df[upper_bound_col].dropna().tolist())
                 
-                # Set y-axis range with 10% padding
-                y_min = max(0, min(y_values) * 0.9) if y_values else 0
-                y_max = max(y_values) * 1.1 if y_values else 100
+                # Set y-axis range to show the full range from min to max values
+                y_min = max(0, min(y_values)) if y_values else 0
+                y_max = max(y_values) if y_values else 100
+                
+                # Add a vertical line at the reference date to separate historical from forecast data
+                fig.add_shape(
+                    type="line",
+                    x0=reference_date,
+                    y0=0,
+                    x1=reference_date,
+                    y1=1,
+                    yref="paper",
+                    line=dict(color="gray", width=1, dash="dash"),
+                )
+                
+                # Add annotation for reference date
+                fig.add_annotation(
+                    x=reference_date,
+                    y=1,
+                    yref="paper",
+                    text="Reference Date (2025-07-08)",
+                    showarrow=True,
+                    arrowhead=1,
+                    ax=0,
+                    ay=-40
+                )
                 
                 # Enhanced layout with better time series controls
                 fig.update_layout(
                     title=dict(
-                        text=f'Sales History + {forecast_model.upper()} Forecast for {product_name}',
+                        text=f'Sales History + {forecast_model.upper()} Forecast for {product_name} (Showing {forecast_days} days forecast)',
                         font=dict(size=16)
                     ),
                     xaxis_title='Date',
@@ -729,7 +782,10 @@ def forecast_data():
                     height=chart_height,
                     yaxis=dict(
                         range=[y_min, y_max],
-                        title_font=dict(size=14),
+                        title=dict(
+                            text='Units Sold',
+                            font=dict(size=14)
+                        ),
                         tickfont=dict(size=12),
                         gridwidth=1,
                         gridcolor='rgba(128,128,128,0.2)'
@@ -738,10 +794,15 @@ def forecast_data():
                         rangeslider=dict(visible=True),
                         type='date',
                         tickformat='%b %d, %Y',  # Improved date format (Aug 01, 2025)
-                        title_font=dict(size=14),
+                        title=dict(
+                            text='Date',
+                            font=dict(size=14)
+                        ),
                         tickfont=dict(size=12),
                         gridwidth=1,
                         gridcolor='rgba(128,128,128,0.2)',
+                        # Add vertical reference line for the forecast start date
+                        rangebreaks=[],
                         rangeselector=dict(
                             buttons=list([
                                 dict(count=7, label='7d', step='day', stepmode='backward'),
@@ -912,10 +973,9 @@ def model_comparison_data():
             fig.add_trace(go.Scatter(
                 x=historical_df['Date'],
                 y=historical_df[sales_col],
-                mode='lines+markers',
+                mode='markers',
                 name='Historical Sales',
-                line=dict(color='darkblue', width=2),
-                marker=dict(size=4)
+                marker=dict(size=6, color='darkblue')
             ))
         
         # Color palette for different models
@@ -1899,9 +1959,9 @@ def detailed_forecast_data():
                 fig.add_trace(go.Scatter(
                     x=forecast_df['Date'],
                     y=forecast_df['Actual'],
-                    mode='lines+markers',
+                    mode='markers',
                     name='Actual Sales',
-                    line=dict(color='green', width=2)
+                    marker=dict(size=6, color='green')
                 ))
             
             # Get product name if available
@@ -1958,9 +2018,9 @@ def detailed_forecast_data():
             fig.add_trace(go.Scatter(
                 x=data['forecast']['Date'],
                 y=data['forecast']['Actual'],
-                mode='lines+markers',
+                mode='markers',
                 name='Actual Sales',
-                line=dict(color='green', width=2)
+                marker=dict(size=6, color='green')
             ))
             
             # Add annotations for key insights
@@ -2537,7 +2597,8 @@ def inventory_recommendations():
                     y=inventory_df['Target_Stock_Weeks'],
                     mode='lines+markers',
                     name='Target Weeks of Stock',
-                    line=dict(color='blue', width=2, dash='dash')
+                    line=dict(color='blue', width=2, dash='dash'),
+                    marker=dict(size=6, color='blue')
                 ))
                 
                 # Add line for minimum weeks of stock
@@ -2614,7 +2675,8 @@ def inventory_recommendations():
             y=inventory_df['Target_Stock_Weeks'],
             mode='lines+markers',
             name='Target Weeks of Stock',
-            line=dict(color='blue', width=2, dash='dash')
+            line=dict(color='blue', width=2, dash='dash'),
+            marker=dict(size=6, color='blue')
         ))
         
         # Add line for minimum weeks of stock
@@ -2704,10 +2766,9 @@ def historical_sales_data():
                     fig.add_trace(go.Scatter(
                         x=historical_df['Date'],
                         y=historical_df[sales_col],
-                        mode='lines+markers',
+                        mode='markers',
                         name='Sales Units',
-                        line=dict(color='blue', width=2),
-                        marker=dict(size=6, line=dict(width=1, color='DarkSlateGrey')),
+                        marker=dict(size=6, color='blue', line=dict(width=1, color='DarkSlateGrey')),
                         hovertemplate='Date: %{x}<br>Sales: %{y:.1f} units<extra></extra>'
                     ))
                 
@@ -2752,8 +2813,10 @@ def historical_sales_data():
                 fig.update_layout(
                     title=f'Historical Sales Data for {product_name} (Store {store_id})',
                     xaxis=dict(
-                        title='Date',
-                        title_font=dict(size=14),
+                        title=dict(
+                            text='Date',
+                            font=dict(size=14)
+                        ),
                         showgrid=True,
                         gridwidth=1,
                         gridcolor='rgba(211,211,211,0.5)',
@@ -2771,8 +2834,10 @@ def historical_sales_data():
                         )
                     ),
                     yaxis=dict(
-                        title='Units Sold',
-                        titlefont=dict(color='blue', size=14),
+                        title=dict(
+                            text='Units Sold',
+                            font=dict(color='blue', size=14)
+                        ),
                         tickfont=dict(color='blue'),
                         showgrid=True,
                         gridwidth=1,
@@ -2782,8 +2847,10 @@ def historical_sales_data():
                         zerolinecolor='black'
                     ),
                     yaxis2=dict(
-                        title='Revenue ($)',
-                        titlefont=dict(color='green', size=14),
+                        title=dict(
+                            text='Revenue ($)',
+                            font=dict(color='green', size=14)
+                        ),
                         tickfont=dict(color='green'),
                         anchor='x',
                         overlaying='y',
@@ -2791,8 +2858,10 @@ def historical_sales_data():
                         showgrid=False
                     ),
                     yaxis3=dict(
-                        title='Price ($)',
-                        titlefont=dict(color='purple', size=14),
+                        title=dict(
+                            text='Price ($)',
+                            font=dict(color='purple', size=14)
+                        ),
                         tickfont=dict(color='purple'),
                         anchor='free',
                         overlaying='y',
@@ -2963,7 +3032,7 @@ def historical_sales_data():
             mode='lines+markers',
             name='Sales Units',
             line=dict(color='blue', width=2),
-            marker=dict(size=6, line=dict(width=1, color='DarkSlateGrey')),
+            marker=dict(size=6, color='blue', line=dict(width=1, color='DarkSlateGrey')),
             hovertemplate='Date: %{x}<br>Sales: %{y:.1f} units<extra></extra>'
         ))
         
@@ -2995,7 +3064,7 @@ def historical_sales_data():
             mode='lines+markers',
             name='Price',
             line=dict(color='purple', width=2),
-            marker=dict(size=5),
+            marker=dict(size=5, color='purple'),
             yaxis='y3',
             hovertemplate='Date: %{x}<br>Price: $%{y:.2f}<extra></extra>'
         ))
@@ -3004,8 +3073,10 @@ def historical_sales_data():
         fig.update_layout(
             title=f'Historical Sales Data for Product {product_id} (Store {store_id}) - Sample Data',
             xaxis=dict(
-                title='Date',
-                titlefont=dict(size=14),
+                title=dict(
+                    text='Date',
+                    font=dict(size=14)
+                ),
                 showgrid=True,
                 gridwidth=1,
                 gridcolor='rgba(211,211,211,0.5)',
@@ -3023,8 +3094,10 @@ def historical_sales_data():
                 )
             ),
             yaxis=dict(
-                title='Units Sold',
-                titlefont=dict(color='blue', size=14),
+                title=dict(
+                    text='Units Sold',
+                    font=dict(color='blue', size=14)
+                ),
                 tickfont=dict(color='blue'),
                 showgrid=True,
                 gridwidth=1,
@@ -3034,8 +3107,10 @@ def historical_sales_data():
                 zerolinecolor='black'
             ),
             yaxis2=dict(
-                title='Revenue ($)',
-                titlefont=dict(color='green', size=14),
+                title=dict(
+                    text='Revenue ($)',
+                    font=dict(color='green', size=14)
+                ),
                 tickfont=dict(color='green'),
                 anchor='x',
                 overlaying='y',
@@ -3043,8 +3118,10 @@ def historical_sales_data():
                 showgrid=False
             ),
             yaxis3=dict(
-                title='Price ($)',
-                titlefont=dict(color='purple', size=14),
+                title=dict(
+                    text='Price ($)',
+                    font=dict(color='purple', size=14)
+                ),
                 tickfont=dict(color='purple'),
                 anchor='free',
                 overlaying='y',
@@ -3243,9 +3320,9 @@ def historical_sales():
                         fig.add_trace(go.Scatter(
                             x=historical_df['Date'],
                             y=historical_df['Sales'],
-                            mode='lines+markers',
+                            mode='markers',
                             name='Sales Units',
-                            line=dict(color='blue', width=2),
+                            marker=dict(size=6, color='blue'),
                             hovertemplate='<b>Date:</b> %{x}<br><b>Sales:</b> %{y:.1f} units<extra></extra>'
                         ))
                     
@@ -3387,9 +3464,9 @@ def historical_sales():
                     fig.add_trace(go.Scatter(
                         x=sample_df['Date'],
                         y=sample_df['Sales'],
-                        mode='lines+markers',
+                        mode='markers',
                         name='Sales Units',
-                        line=dict(color='blue', width=2),
+                        marker=dict(size=6, color='blue'),
                         hovertemplate='<b>Date:</b> %{x}<br><b>Sales:</b> %{y:.1f} units<extra></extra>'
                     ))
                     

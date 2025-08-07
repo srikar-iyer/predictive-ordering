@@ -96,7 +96,8 @@ class UnifiedDataModel:
                 from src.data.data_loader import load_pizza_datasets
                 
                 # Try to load data with synthetic generation if needed
-                self.data_dict['combined_data'] = load_pizza_datasets(create_synthetic_if_missing=True)
+                # Ensure we include sales data before 07/08 reference date
+                self.data_dict['combined_data'] = load_pizza_datasets(create_synthetic_if_missing=True, include_pre_reference_sales=True)
                 logger.info(f"Successfully loaded combined_data with {len(self.data_dict['combined_data'])} records")
             except Exception as e:
                 logger.error(f"Failed to load combined_data: {str(e)}")

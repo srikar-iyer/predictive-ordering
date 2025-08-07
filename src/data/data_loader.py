@@ -71,7 +71,8 @@ def load_pizza_datasets(sales_file=SALES_FILE,
                         purchases_file=PURCHASES_FILE,
                         stock_file=STOCK_FILE,
                         fallback_dir=None,
-                        create_synthetic_if_missing=True):
+                        create_synthetic_if_missing=True,
+                        include_pre_reference_sales=True):
     """
     Load and process the three pizza datasets: sales, purchases, and stock.
     
@@ -267,7 +268,8 @@ def load_pizza_datasets(sales_file=SALES_FILE,
             'Total_Retail_$': 'Retail_Revenue',
             'Total_Cost_$': 'Cost',
             'Item_Description': 'Product_Name',
-            'store_id': 'Store_Id'
+            'store_id': 'Store_Id',
+            'Size': 'Size'  # Keep Size column mapped directly
         }, inplace=True)
         
         # Process purchases data (shipments to store)
@@ -405,6 +407,60 @@ def load_pizza_datasets(sales_file=SALES_FILE,
         stock_metrics.loc[:, 'item'] = stock_metrics['item'].astype(str)
         merged_df['Store_Id'] = merged_df['Store_Id'].astype(str)
         merged_df['item'] = merged_df['item'].astype(str)
+        
+        # Calculate weekly sales metrics if they don't exist or are empty in stock_df
+        if stock_metrics['Avg_Weekly_Sales_4W'].isna().all():
+            logger.info("Calculating Avg_Weekly_Sales_4W from historical sales data")
+            # Calculate 4-week average sales by product/store
+            for (store, item), group in merged_df.groupby(['Store_Id', 'item']):
+                recent_sales = group.sort_values('Date', ascending=False).head(28)  # Last 4 weeks (28 days)
+                if len(recent_sales) > 0:
+                    avg_weekly = recent_sales['Units_Sold'].sum() / 4  # Average weekly sales
+                    # Assign to all rows for this store/item in stock_metrics
+                    mask = (stock_metrics['Store_Id'] == store) & (stock_metrics['item'] == item)
+                    stock_metrics.loc[mask, 'Avg_Weekly_Sales_4W'] = avg_weekly
+                    
+        if stock_metrics['Avg_Weekly_Sales_13W'].isna().all():
+            logger.info("Calculating Avg_Weekly_Sales_13W from historical sales data")
+            # Calculate 13-week average sales by product/store
+            for (store, item), group in merged_df.groupby(['Store_Id', 'item']):
+                recent_sales = group.sort_values('Date', ascending=False).head(91)  # Last 13 weeks (91 days)
+                if len(recent_sales) > 0:
+                    avg_weekly = recent_sales['Units_Sold'].sum() / 13  # Average weekly sales
+                    # Assign to all rows for this store/item in stock_metrics
+                    mask = (stock_metrics['Store_Id'] == store) & (stock_metrics['item'] == item)
+                    stock_metrics.loc[mask, 'Avg_Weekly_Sales_13W'] = avg_weekly
+        
+        # Calculate stock coverage if it doesn't exist or is empty
+        if stock_metrics['Stock_Coverage_Weeks'].isna().all():
+            logger.info("Calculating Stock_Coverage_Weeks from stock levels and recent sales")
+            for (store, item), group in merged_df.groupby(['Store_Id', 'item']):
+                # Get the latest stock level
+                latest_record = group.sort_values('Date', ascending=False).iloc[0]
+                stock_level = latest_record['Stock_Level']
+                
+                # Use the 4W average if available, otherwise 13W, otherwise recent daily sales
+                mask = (stock_metrics['Store_Id'] == store) & (stock_metrics['item'] == item)
+                avg_weekly_sales = stock_metrics.loc[mask, 'Avg_Weekly_Sales_4W'].iloc[0] if not stock_metrics.loc[mask, 'Avg_Weekly_Sales_4W'].isna().all() else \
+                                  (stock_metrics.loc[mask, 'Avg_Weekly_Sales_13W'].iloc[0] if not stock_metrics.loc[mask, 'Avg_Weekly_Sales_13W'].isna().all() else None)
+                
+                if avg_weekly_sales is None or avg_weekly_sales == 0:
+                    # Use recent daily sales as a fallback
+                    recent_daily = latest_record.get('Recent_Daily_Sales', 0)
+                    if recent_daily > 0:
+                        avg_weekly_sales = recent_daily * 7
+                    else:
+                        # Final fallback: average of all historical sales
+                        avg_weekly_sales = group['Units_Sold'].mean() * 7 if group['Units_Sold'].mean() > 0 else 1
+                
+                # Calculate weeks of stock coverage
+                if avg_weekly_sales > 0:
+                    coverage_weeks = stock_level / avg_weekly_sales
+                    # Assign to all rows for this store/item
+                    stock_metrics.loc[mask, 'Stock_Coverage_Weeks'] = coverage_weeks
+                else:
+                    # If no sales data, default to 4 weeks coverage
+                    stock_metrics.loc[mask, 'Stock_Coverage_Weeks'] = 4.0
         
         merged_df = pd.merge(
             merged_df,
@@ -750,7 +806,7 @@ def save_combined_dataset(df, output_file=COMBINED_DATA_FILE, validate=True):
             logger.error(f"Failed to save backup: {str(e2)}")
             raise e  # Re-raise the original exception
 
-def process_data(fallback_dir=None, create_synthetic_if_missing=True, validate=True):
+def process_data(fallback_dir=None, create_synthetic_if_missing=True, validate=True, include_pre_reference_sales=True):
     """
     Main function to load, process and save the dataset.
     This function is called when the script is run directly.
@@ -766,7 +822,8 @@ def process_data(fallback_dir=None, create_synthetic_if_missing=True, validate=T
     try:
         # Load and process the pizza datasets
         combined_df = load_pizza_datasets(fallback_dir=fallback_dir, 
-                                         create_synthetic_if_missing=create_synthetic_if_missing)
+                                         create_synthetic_if_missing=create_synthetic_if_missing,
+                                         include_pre_reference_sales=include_pre_reference_sales)
         
         if combined_df is None or combined_df.empty:
             logger.critical("Failed to load or generate dataset")

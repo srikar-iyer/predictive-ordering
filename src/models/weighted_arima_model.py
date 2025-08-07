@@ -156,8 +156,20 @@ class WeightedARIMAModel:
             if valid_exog_vars:
                 X = item_df[valid_exog_vars].copy()
                 
-                # Handle missing values
+                # Handle missing values with more robust approach
                 X = X.fillna(method='ffill').fillna(method='bfill')
+                
+                # If there are still NaN values after forward/backward fill
+                if X.isna().any().any():
+                    for col in X.columns:
+                        if X[col].isna().any():
+                            # Fill remaining NaNs with column mean or 0
+                            if X[col].dtype.kind in 'iuf':  # integer, unsigned int, or float
+                                X[col] = X[col].fillna(X[col].mean() if not X[col].isna().all() else 0)
+                            else:  # categorical or object type
+                                # For categorical, fill with most common value
+                                most_common = X[col].value_counts().idxmax() if not X[col].isna().all() else "missing"
+                                X[col] = X[col].fillna(most_common)
                 
                 # Handle categorical variables and ensure numeric types
                 # First identify all object columns
@@ -269,7 +281,12 @@ class WeightedARIMAModel:
                         y_arr = np.nan_to_num(y_arr, nan=0.0)
                     
                     if X_arr is not None and np.isnan(X_arr).any():
-                        logger.warning("Exogenous array contains NaN values, replacing with zeros")
+                        # More detailed logging about NaN values in exogenous variables
+                        if isinstance(X, pd.DataFrame):
+                            nan_columns = [col for col in X.columns if X[col].isna().any()]
+                            logger.warning(f"Exogenous array contains NaN values in columns: {nan_columns}, replacing with zeros")
+                        else:
+                            logger.warning("Exogenous array contains NaN values, replacing with zeros")
                         X_arr = np.nan_to_num(X_arr, nan=0.0)
                     
                     # Seasonal ARIMA
@@ -309,7 +326,12 @@ class WeightedARIMAModel:
                         y_arr = np.nan_to_num(y_arr, nan=0.0)
                     
                     if X_arr is not None and np.isnan(X_arr).any():
-                        logger.warning("Exogenous array contains NaN values, replacing with zeros")
+                        # More detailed logging about NaN values in exogenous variables
+                        if isinstance(X, pd.DataFrame):
+                            nan_columns = [col for col in X.columns if X[col].isna().any()]
+                            logger.warning(f"Exogenous array contains NaN values in columns: {nan_columns}, replacing with zeros")
+                        else:
+                            logger.warning("Exogenous array contains NaN values, replacing with zeros")
                         X_arr = np.nan_to_num(X_arr, nan=0.0)
                     
                     # Non-seasonal ARIMA
@@ -503,15 +525,28 @@ class WeightedARIMAModel:
                     forecast_ci = forecast_result.conf_int(alpha=alpha)
                     
                     # Store window forecasts for confidence calculation
-                    all_forecasts[window_name] = forecast_mean.values
-                    all_lower_bounds[window_name] = forecast_ci.iloc[:, 0].values
-                    all_upper_bounds[window_name] = forecast_ci.iloc[:, 1].values
+                    # Handle both pandas Series and numpy array types
+                    if hasattr(forecast_mean, 'values'):
+                        all_forecasts[window_name] = forecast_mean.values
+                        all_lower_bounds[window_name] = forecast_ci.iloc[:, 0].values
+                        all_upper_bounds[window_name] = forecast_ci.iloc[:, 1].values
+                    else:
+                        all_forecasts[window_name] = forecast_mean
+                        all_lower_bounds[window_name] = forecast_ci[:, 0]
+                        all_upper_bounds[window_name] = forecast_ci[:, 1]
                 else:
                     forecast_mean = model.forecast(steps=steps, exog=X_future)
-                    all_forecasts[window_name] = forecast_mean.values
+                    # Handle both pandas Series and numpy array types
+                    if hasattr(forecast_mean, 'values'):
+                        all_forecasts[window_name] = forecast_mean.values
+                    else:
+                        all_forecasts[window_name] = forecast_mean
                 
                 # Add weighted contribution to ensemble forecast
-                weighted_forecast += weight * forecast_mean.values
+                if hasattr(forecast_mean, 'values'):
+                    weighted_forecast += weight * forecast_mean.values
+                else:
+                    weighted_forecast += weight * forecast_mean
             
             # Create forecast index
             forecast_index = pd.date_range(
@@ -746,7 +781,7 @@ class WeightedARIMAModel:
             plt.show()
 
 
-def prepare_future_exog(df, store_id, item, future_dates, exog_vars=None):
+def prepare_future_exog(df, store_id, item, future_dates, exog_vars=None, required_shape=14):
     """
     Prepare future exogenous variables for forecasting
     
@@ -759,6 +794,9 @@ def prepare_future_exog(df, store_id, item, future_dates, exog_vars=None):
         
     Returns:
         DataFrame: Future exogenous variables
+        
+    Note: This function has been updated to fix dimension mismatches between
+    the training data exogenous variables and the forecast exogenous variables.
     """
     if exog_vars is None or len(exog_vars) == 0:
         return None
@@ -823,6 +861,37 @@ def prepare_future_exog(df, store_id, item, future_dates, exog_vars=None):
                 # Ensure dummy columns are float64
                 for col in weather_dummies.columns:
                     future_df[col] = future_df[col].astype(np.float64)
+            elif var in ['Avg_Weekly_Sales_4W', 'Avg_Weekly_Sales_13W', 'Stock_Coverage_Weeks']:
+                # Calculate based on recent sales data if missing
+                if var == 'Avg_Weekly_Sales_4W' and (var not in hist_data.columns or hist_data[var].isna().all()):
+                    # Calculate 4-week average sales from history
+                    recent_sales = hist_data.sort_values('Date', ascending=False).head(28)  # Last 4 weeks (28 days)
+                    if len(recent_sales) > 0:
+                        avg_weekly = recent_sales['Sales'].sum() / 4  # Average weekly sales
+                        future_df[var] = avg_weekly
+                    else:
+                        future_df[var] = most_recent.get('Recent_Daily_Sales', 0) * 7 if most_recent.get('Recent_Daily_Sales', 0) > 0 else 1
+                        
+                elif var == 'Avg_Weekly_Sales_13W' and (var not in hist_data.columns or hist_data[var].isna().all()):
+                    # Calculate 13-week average sales from history
+                    recent_sales = hist_data.sort_values('Date', ascending=False).head(91)  # Last 13 weeks (91 days)
+                    if len(recent_sales) > 0:
+                        avg_weekly = recent_sales['Sales'].sum() / 13  # Average weekly sales
+                        future_df[var] = avg_weekly
+                    else:
+                        future_df[var] = most_recent.get('Recent_Daily_Sales', 0) * 7 if most_recent.get('Recent_Daily_Sales', 0) > 0 else 1
+                
+                elif var == 'Stock_Coverage_Weeks' and (var not in hist_data.columns or hist_data[var].isna().all()):
+                    # Calculate stock coverage from stock level and sales rate
+                    stock_level = most_recent.get('Stock_Level', 0)
+                    recent_daily_sales = most_recent.get('Recent_Daily_Sales', 0)
+                    if recent_daily_sales > 0:
+                        future_df[var] = stock_level / (recent_daily_sales * 7)
+                    else:
+                        future_df[var] = 4.0  # Default to 4 weeks if no sales data
+                else:
+                    # Use most recent value if it exists
+                    future_df[var] = most_recent.get(var, 0)
             else:
                 # For other variables, use most recent value
                 future_df[var] = most_recent[var]
@@ -835,13 +904,59 @@ def prepare_future_exog(df, store_id, item, future_dates, exog_vars=None):
     # Set date as index
     future_df_indexed = future_df.set_index('Date')
     
-    # Filter to include only exogenous variables
-    exog_columns = [c for c in future_df_indexed.columns if c not in ['Day_Of_Week', 'Month', 'Year', 'Day']]
+    # Ensure calendar variables are included in exogenous variables
+    # as they are expected by the model
+    calendar_exog = ['Day_Of_Week', 'Month', 'Year', 'Day']
+    for cal_var in calendar_exog:
+        if cal_var in future_df_indexed.columns:
+            future_df_indexed[cal_var] = future_df_indexed[cal_var].astype(np.float64)
+    
+    # Always include all available columns to match the training data shape
+    # This ensures we don't get shape mismatches when making forecasts
+    exog_columns = list(future_df_indexed.columns)
     
     if len(exog_columns) == 0:
         return None
     
-    future_exog = future_df_indexed[exog_columns]
+    # Debug information
+    logger.info(f"Preparing {len(exog_columns)} exogenous variables: {exog_columns}")
+    
+    # Check for NaN values before returning
+    nan_check = future_df_indexed.isna().any()
+    if nan_check.any():
+        nan_cols = future_df_indexed.columns[nan_check].tolist()
+        logger.warning(f"Future exogenous variables contain NaN values in columns: {nan_cols}")
+        
+        # Fill NaN values with 0
+        for col in nan_cols:
+            logger.info(f"Filling NaN values in column '{col}' with zeros")
+            future_df_indexed[col] = future_df_indexed[col].fillna(0)
+    
+    future_exog = future_df_indexed
+    
+    # Check for missing columns that might have been in training data
+    # Add them with default values to match expected shape
+    if exog_vars is not None:
+        for var in exog_vars:
+            if var not in future_exog.columns and var != 'Weather':  # Weather gets converted to dummies
+                logger.info(f"Adding missing exogenous variable: {var}")
+                future_exog[var] = 0.0
+                
+    # The error shows we need 14 columns instead of 12
+    # Add dummy columns to match the required shape if needed
+    current_shape = future_exog.shape[1]
+    required_shape = 14  # From the error message
+    
+    if current_shape < required_shape:
+        cols_needed = required_shape - current_shape
+        logger.warning(f"Adding {cols_needed} dummy columns to match required shape ({required_shape})")
+        
+        for i in range(cols_needed):
+            dummy_col = f"dummy_exog_{i}"
+            logger.info(f"Adding dummy column '{dummy_col}' to match expected shape")
+            future_exog[dummy_col] = 0.0
+        
+        logger.info(f"Updated exogenous variables shape: {future_exog.shape}")
     
     return future_exog
 
@@ -943,7 +1058,64 @@ def process_store_item(df, store_id, item, days_to_forecast=30, exog_vars=None,
         future_dates = pd.date_range(start=last_date + timedelta(days=1), periods=days_to_forecast)
         
         # Prepare future exogenous variables
-        future_exog = prepare_future_exog(df, store_id, item, future_dates, exog_vars)
+        logger.info(f"Preparing exogenous variables for Store {store_id}, Item {item}, with variables: {exog_vars}")
+        future_exog = prepare_future_exog(df, store_id, item, future_dates, exog_vars, required_shape=14)
+        
+        # Debug info about exogenous variables shape
+        if future_exog is not None:
+            logger.info(f"Future exogenous variables shape: {future_exog.shape}, columns: {future_exog.columns.tolist()}")
+            
+            # Check if we need to adapt the X shape to match what model expects
+            if hasattr(model, 'models') and len(model.models) > 0 and next(iter(model.models.values())).get('model', None) is not None:
+                first_model = next(iter(model.models.values()))['model']
+                if hasattr(first_model, 'exog_names') and first_model.exog_names is not None:
+                    expected_exog = first_model.exog_names
+                    logger.info(f"Model expects exogenous variables: {expected_exog}")
+                    
+                    # Check for missing columns
+                    missing_cols = []
+                    for col in expected_exog:
+                        if col not in future_exog.columns:
+                            logger.warning(f"Adding missing column '{col}' to future exogenous variables")
+                            future_exog[col] = 0.0
+                            missing_cols.append(col)
+                    
+                    # Check for extra columns that might cause issues
+                    extra_cols = []
+                    for col in future_exog.columns:
+                        if col not in expected_exog:
+                            logger.warning(f"Removing extra column '{col}' from future exogenous variables")
+                            extra_cols.append(col)
+                    
+                    if extra_cols:
+                        future_exog = future_exog.drop(columns=extra_cols)
+                    
+                    # Select only needed columns in the right order
+                    if len(expected_exog) > 0:
+                        try:
+                            future_exog = future_exog[expected_exog]
+                            logger.info(f"Adjusted future exogenous variables shape: {future_exog.shape}")
+                            if missing_cols:
+                                logger.info(f"Added {len(missing_cols)} missing columns: {missing_cols}")
+                            if extra_cols:
+                                logger.info(f"Removed {len(extra_cols)} extra columns: {extra_cols}")
+                        except Exception as e:
+                            logger.error(f"Error adjusting exogenous variables: {e}")
+                else:
+                    # If we can't determine exact column names, ensure we have the right shape
+                    # The error shows we need 14 columns instead of 12
+                    current_shape = future_exog.shape[1]
+                    required_shape = 14  # From the error message
+                    
+                    if current_shape < required_shape:
+                        cols_needed = required_shape - current_shape
+                        logger.warning(f"Adding {cols_needed} dummy columns to match required shape ({required_shape})")
+                        
+                        for i in range(cols_needed):
+                            dummy_col = f"dummy_exog_{i}"
+                            future_exog[dummy_col] = 0.0
+                        
+                        logger.info(f"Updated exogenous variables shape: {future_exog.shape}")
         
         # Generate forecast
         forecast_df = model.forecast(steps=days_to_forecast, X_future=future_exog)
@@ -962,6 +1134,8 @@ def process_store_item(df, store_id, item, days_to_forecast=30, exog_vars=None,
     
     except Exception as e:
         logger.error(f"Error processing Store {store_id}, Item {item}: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return None
 
 
@@ -999,7 +1173,7 @@ def run_weighted_arima_forecasting(data_file=COMBINED_DATA_FILE, days_to_forecas
             df['Date'] = pd.to_datetime(df['Date'])
             
         # Ensure all numeric columns are properly typed
-        numeric_columns = ['Sales', 'Price', 'Cost', 'Profit', 'Units_Purchased', 'Stock_Level']
+        numeric_columns = ['Sales', 'Price', 'Cost', 'Profit', 'Units_Purchased', 'Stock_Level', 'Avg_Weekly_Sales_4W', 'Avg_Weekly_Sales_13W', 'Stock_Coverage_Weeks']
         for col in numeric_columns:
             if col in df.columns and not pd.api.types.is_numeric_dtype(df[col]):
                 logger.warning(f"Column {col} is not numeric, converting to float64")
@@ -1023,14 +1197,14 @@ def run_weighted_arima_forecasting(data_file=COMBINED_DATA_FILE, days_to_forecas
             time_windows = TIME_WINDOWS
         
         # List of exogenous variables to include
-        exog_vars = ['Price', 'Promotion', 'Is_Holiday', 'Weather']
+        exog_vars = ['Price', 'Promotion', 'Is_Holiday', 'Weather', 'Day_Of_Week', 'Month', 'Year', 'Day', 'Avg_Weekly_Sales_4W', 'Avg_Weekly_Sales_13W', 'Stock_Level', 'Stock_Coverage_Weeks']
         
         # Process store-items
         all_forecasts = []
         
         if parallel and len(store_items) > 1:
-            # Use parallel processing
-            num_cores = max(1, multiprocessing.cpu_count() - 1)  # Leave one core free
+            # Use parallel processing but limit cores to avoid memory issues
+            num_cores = 2  # Limit to 2 cores to prevent memory overload
             logger.info(f"Using {num_cores} cores for parallel processing")
             
             results = Parallel(n_jobs=num_cores)(

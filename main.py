@@ -185,7 +185,7 @@ def run_data_integration():
                 logger.info(f"Using {raw_dir} as fallback directory for data files")
                 print(f"Using {raw_dir} as fallback directory for data files")
             
-            process_data(fallback_dir=fallback_dir)
+            process_data(fallback_dir=fallback_dir, include_pre_reference_sales=True)
             return True
         except Exception as e:
             logger.error(f"Error using refactored data loader: {e}")

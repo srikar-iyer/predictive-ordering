@@ -94,6 +94,15 @@
                                 <option value="full">Full Range</option>
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label for="forecast-days" class="form-label">Forecast Days (after 2025-07-08)</label>
+                            <select class="form-select" id="forecast-days">
+                                <option value="14" selected>14 days</option>
+                                <option value="7">7 days</option>
+                                <option value="21">21 days</option>
+                                <option value="30">30 days</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card border-light">
@@ -141,7 +150,7 @@
                                     Use toggles to show/hide models and confidence intervals.
                                 </p>
                                 <p class="card-text small text-muted mt-2 mb-0">
-                                    <i class="fas fa-calendar-alt"></i> Default view: 2 weeks
+                                    <i class="fas fa-calendar-alt"></i> Default view: <span id="default-forecast-days">14</span> days forecast after 2025-07-08
                                 </p>
                             </div>
                         </div>
@@ -276,6 +285,11 @@
             if (productId !== 'all') baseParams.append('product_id', productId);
             if (startDate) baseParams.append('start_date', startDate);
             if (endDate) baseParams.append('end_date', endDate);
+            
+            // Add forecast days parameter
+            const forecastDays = document.getElementById('forecast-days').value;
+            baseParams.append('forecast_days', forecastDays);
+            
             const queryString = baseParams.toString() ? `?${baseParams.toString()}` : '';
             
             // Show loading indicator
@@ -682,6 +696,10 @@
             if (endDate) params.append('end_date', endDate);
             if (datePreset !== 'full') params.append('timespan', datePresetToTimespan(datePreset));
             
+            // Add forecast days parameter
+            const forecastDays = document.getElementById('forecast-days').value;
+            params.append('forecast_days', forecastDays);
+            
             // Call the loadAllForecastModels function with new filters
             loadAllForecastModels();
             
@@ -704,6 +722,14 @@
                     console.error('Error loading distribution chart:', error);
                 });
                 
+        });
+        
+        // Forecast days change handler
+        document.getElementById('forecast-days').addEventListener('change', function() {
+            // Update displayed default days
+            document.getElementById('default-forecast-days').textContent = this.value;
+            // Auto-update the forecast when forecast days changes
+            document.getElementById('apply-filters').click();
         });
         
         // Date preset change handler
